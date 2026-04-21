@@ -1,0 +1,34 @@
+name: data-cleaning-env
+version: 1.0.0
+description: Real-world data cleaning and validation environment for training AI agents
+author: OpenEnv Community
+openenv_version: "1.0"
+
+observation_model: src.models.Observation
+action_model: src.models.Action
+reward_model: src.models.Reward
+
+env_path: src.environment:DataCleaningEnv
+
+tasks:
+  - id: task_missing_values
+    name: Missing Values Detection and Imputation Strategy
+    description: Identify missing values in dataset and recommend imputation approach
+    difficulty: easy
+    grader: src.graders:MissingValuesGrader
+
+  - id: task_duplicate_handling
+    name: Duplicate Detection and Removal
+    description: Identify duplicates and apply appropriate deduplication strategy
+    difficulty: medium
+    grader: src.graders:DuplicateHandlingGrader
+
+  - id: task_complex_validation
+    name: Complex Data Quality Validation
+    description: Comprehensive validation including type checks, domain rules, and quality metrics
+    difficulty: hard
+    grader: src.graders:ComplexValidationGrader
+
+features:
+  max_steps: 50
+  episode_timeout: 300

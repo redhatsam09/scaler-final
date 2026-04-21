@@ -1,0 +1,62 @@
+#!/bin/bash
+set -e
+
+echo "=========================================="
+echo "Data Cleaning Environment - Deployment Guide"
+echo "=========================================="
+echo ""
+
+REPO_URL="https://github.com/redhatsam09/scaler-final"
+SPACE_NAME="data-cleaning-env"
+HF_USERNAME="redhatsam09"
+HF_SPACE_URL="https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
+
+echo "STEP 1: Push latest repository state"
+echo "=========================================="
+echo "$ cd /workspaces/scaler-final"
+echo "$ git add ."
+echo "$ git commit -m 'Submission hardening: determinism, sessions, training artifacts'"
+echo "$ git push origin main"
+echo ""
+
+echo "STEP 2: Create / update Hugging Face Space"
+echo "=========================================="
+echo "Go to: https://huggingface.co/new-space"
+echo "Space SDK: Docker"
+echo "Visibility: Public"
+echo "Space name: ${SPACE_NAME}"
+echo ""
+
+echo "STEP 3: Configure Space environment variables"
+echo "=========================================="
+echo "API_BASE_URL=https://api.openai.com/v1"
+echo "MODEL_NAME=gpt-4"
+echo "HF_TOKEN=hf_your_hf_token"
+echo "OPENAI_API_KEY=sk_your_openai_key"
+echo ""
+
+echo "STEP 4: Verify API with session_id"
+echo "=========================================="
+echo "$ curl -s -X POST https://${HF_USERNAME}-${SPACE_NAME}.hf.space/reset -H 'Content-Type: application/json' -d '{\"task_id\":\"task_missing_values\",\"seed\":2026}'"
+echo "Capture returned session_id and use it for /step, /state, /grade."
+echo ""
+
+echo "STEP 5: Publish external evidence links"
+echo "=========================================="
+echo "Upload/share and add final public URLs in README.md placeholders:"
+echo "  - HF Space URL"
+echo "  - Colab notebook URL"
+echo "  - Mini-blog or <2 min video URL"
+echo ""
+
+echo "STEP 6: Final submission checks"
+echo "=========================================="
+echo "Run:"
+echo "  openenv validate"
+echo "  python inference.py"
+echo "  python training/evaluate_reward_improvement.py"
+echo "  python training/trl_sft_training.py"
+echo ""
+
+echo "Current expected reward progression (from artifacts/reward_progression.csv):"
+echo "  baseline=0.655990, mid=0.958862, trained=0.990000"

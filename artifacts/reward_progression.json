@@ -1,0 +1,29 @@
+[
+  {
+    "stage": "baseline",
+    "average_score": 0.6559896672034353,
+    "task_scores": {
+      "task_missing_values": 0.4740740740740741,
+      "task_duplicate_handling": 0.99,
+      "task_complex_validation": 0.5038949275362319
+    }
+  },
+  {
+    "stage": "mid",
+    "average_score": 0.9588615664845173,
+    "task_scores": {
+      "task_missing_values": 0.99,
+      "task_duplicate_handling": 0.99,
+      "task_complex_validation": 0.8965846994535519
+    }
+  },
+  {
+    "stage": "trained",
+    "average_score": 0.9899999999999999,
+    "task_scores": {
+      "task_missing_values": 0.99,
+      "task_duplicate_handling": 0.99,
+      "task_complex_validation": 0.99
+    }
+  }
+]
