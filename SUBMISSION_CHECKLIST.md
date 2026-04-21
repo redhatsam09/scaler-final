@@ -38,6 +38,7 @@ REQUIRED DELIVERABLES
 [✓] Gemini temporary inference path
     - `INFERENCE_BACKEND=gemini`
     - `GEMINI_API_KEY` supported as a secret
+    - Default Gemini model: `gemini-3-flash-preview`
     - OpenAI-compatible fallback remains available for venue keys
 
 [✓] Dependency alignment
@@ -61,6 +62,11 @@ VALIDATION COMMANDS
 3. python inference.py
 4. python training/evaluate_reward_improvement.py
 5. python training/trl_sft_training.py
+
+VIDEO WALKTHROUGH
+=================
+
+Use `VIDEO_DEMO_GUIDE.md` for recording commands, talking points, and the short demo script.
 
 CURRENT EVIDENCE SNAPSHOT
 =========================

@@ -34,6 +34,8 @@ python world_modeling_demo.py
 
 The demo prints reset state, each action, reward, before/after missing and duplicate counts, and final grader score.
 
+For a recording walkthrough with exact commands and talking points, see `VIDEO_DEMO_GUIDE.md`.
+
 ## What changed for submission hardening
 
 - Added deterministic seed plumbing in `src/environment.py` and `inference.py`.
@@ -152,7 +154,7 @@ INFERENCE_BACKEND=local python inference.py
 The local backend is deterministic and does not call any external API. Temporary Gemini validation can use Google AI Studio keys through the OpenAI-compatible Gemini endpoint:
 
 ```bash
-GEMINI_API_KEY=... INFERENCE_BACKEND=gemini MODEL_NAME=gemini-2.5-flash python inference.py
+GEMINI_API_KEY=... INFERENCE_BACKEND=gemini MODEL_NAME=gemini-3-flash-preview python inference.py
 ```
 
 When an OpenAI key is available at the venue, use:
