@@ -13,6 +13,8 @@
 - Colab notebook artifact
 - Reward-improvement evidence artifacts
 - Dependency alignment cleanup
+- Theme #3 world-modeling demo (`python world_modeling_demo.py`)
+- Gemini temporary inference backend with local fallback
 - Live Hugging Face Space: https://huggingface.co/spaces/samdutta123/scaler-final-openenv
 
 ## Blocking items (external links)
@@ -30,3 +32,4 @@ Replace these placeholders in `README.md` with real public URLs:
 - `artifacts/trl_sft_training_metrics.json`
 - `training/colab_trl_sft_notebook.ipynb`
 - `training/trl_sft_training.py`
+- `world_modeling_demo.py`

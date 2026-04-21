@@ -30,6 +30,16 @@ REQUIRED DELIVERABLES
     - `session_id` introduced in server API
     - Per-session environment instances in memory map
 
+[✓] Theme #3 world-modeling validation
+    - Hidden mutable dataset state with partial observations
+    - Multi-step actions mutate the environment state
+    - `python world_modeling_demo.py` prints action/state/reward causality
+
+[✓] Gemini temporary inference path
+    - `INFERENCE_BACKEND=gemini`
+    - `GEMINI_API_KEY` supported as a secret
+    - OpenAI-compatible fallback remains available for venue keys
+
 [✓] Dependency alignment
     - `requirements.txt`, `pyproject.toml`, and `setup.py` aligned
     - `openenv-core` explicitly listed in install requirements
@@ -47,9 +57,10 @@ VALIDATION COMMANDS
 ===================
 
 1. openenv validate
-2. python inference.py
-3. python training/evaluate_reward_improvement.py
-4. python training/trl_sft_training.py
+2. python world_modeling_demo.py
+3. python inference.py
+4. python training/evaluate_reward_improvement.py
+5. python training/trl_sft_training.py
 
 CURRENT EVIDENCE SNAPSHOT
 =========================

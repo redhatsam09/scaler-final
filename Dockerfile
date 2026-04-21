@@ -9,8 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 ENV API_BASE_URL=https://api.openai.com/v1
-ENV MODEL_NAME=gpt-4
-ENV INFERENCE_BACKEND=local
+ENV GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+ENV MODEL_NAME=gemini-2.5-flash
+ENV INFERENCE_BACKEND=gemini
 
 EXPOSE 7860
 

@@ -8,9 +8,13 @@ from src.models import Action
 from src.graders import MissingValuesGrader, DuplicateHandlingGrader, ComplexValidationGrader
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("MODEL_API_KEY")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("MODEL_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+MODEL_NAME = os.getenv("MODEL_NAME")
 INFERENCE_BACKEND = os.getenv("INFERENCE_BACKEND", "auto").strip().lower()
+DEFAULT_OPENAI_MODEL = "gpt-4"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 MAX_STEPS = 20
 TEMPERATURE = 0.0
 MAX_TOKENS = 500
@@ -69,12 +73,47 @@ def extract_action(response_text: str) -> Optional[Action]:
         return None
 
 
-def should_use_remote_model() -> bool:
+def resolve_remote_model() -> Optional[dict[str, str]]:
     if INFERENCE_BACKEND == "local":
-        return False
-    if INFERENCE_BACKEND == "api":
-        return bool(API_KEY)
-    return bool(API_KEY)
+        return None
+
+    if INFERENCE_BACKEND == "gemini":
+        if not GEMINI_API_KEY:
+            return None
+        return {
+            "provider": "gemini",
+            "api_key": GEMINI_API_KEY,
+            "base_url": GEMINI_BASE_URL,
+            "model": MODEL_NAME or DEFAULT_GEMINI_MODEL,
+        }
+
+    if INFERENCE_BACKEND in {"api", "openai"}:
+        if not OPENAI_API_KEY:
+            return None
+        return {
+            "provider": "openai_compatible",
+            "api_key": OPENAI_API_KEY,
+            "base_url": API_BASE_URL,
+            "model": MODEL_NAME or DEFAULT_OPENAI_MODEL,
+        }
+
+    if GEMINI_API_KEY:
+        return {
+            "provider": "gemini",
+            "api_key": GEMINI_API_KEY,
+            "base_url": GEMINI_BASE_URL,
+            "model": MODEL_NAME or DEFAULT_GEMINI_MODEL,
+        }
+
+    if OPENAI_API_KEY:
+        return {
+            "provider": "openai_compatible",
+            "api_key": OPENAI_API_KEY,
+            "base_url": API_BASE_URL,
+            "model": MODEL_NAME or DEFAULT_OPENAI_MODEL,
+        }
+
+    return None
 
 
 def local_policy_action(task_id: str, observation, step: int) -> Action:
@@ -148,12 +187,20 @@ def local_policy_action(task_id: str, observation, step: int) -> Action:
 
 def run_task(env: DataCleaningEnv, task_id: str, grader_class, seed: int) -> float:
     client = None
-    if should_use_remote_model():
-        client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    remote_model = resolve_remote_model()
+    if remote_model:
+        client = OpenAI(base_url=remote_model["base_url"], api_key=remote_model["api_key"])
     
     observation = env.reset(task_id=task_id, seed=seed)
-    emit("START", task=task_id, seed=seed)
+    emit(
+        "START",
+        task=task_id,
+        seed=seed,
+        backend=remote_model["provider"] if remote_model else "local",
+        model=remote_model["model"] if remote_model else "local_policy",
+    )
     steps_executed = 0
+    remote_disabled = False
     
     for step in range(1, MAX_STEPS + 1):
         state_description = f"""
@@ -173,17 +220,24 @@ Based on this state, what data cleaning action should you take next?
         ]
         
         response_text = ""
-        if client is not None:
+        if client is not None and not remote_disabled:
             try:
                 completion = client.chat.completions.create(
-                    model=MODEL_NAME,
+                    model=remote_model["model"],
                     messages=messages,
                     temperature=TEMPERATURE,
                     max_tokens=MAX_TOKENS,
                 )
                 response_text = completion.choices[0].message.content or ""
-            except Exception:
-                emit("STEP", task=task_id, step=step, action="api_error", reward="0.000000", done="false")
+            except Exception as exc:
+                remote_disabled = True
+                emit(
+                    "MODEL_ERROR",
+                    task=task_id,
+                    step=step,
+                    provider=remote_model["provider"],
+                    error=exc.__class__.__name__,
+                )
         
         action = extract_action(response_text)
         if not action:
@@ -201,6 +255,9 @@ Based on this state, what data cleaning action should you take next?
         )
         
         if done:
+            break
+
+        if action.action_type == "report_findings" and step >= 4:
             break
     
     episode_state = env.current_episode

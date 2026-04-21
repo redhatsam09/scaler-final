@@ -17,6 +17,23 @@ This repository provides an OpenEnv-compatible data cleaning environment with:
 4. a minimal Hugging Face TRL training pipeline and Colab notebook artifact,
 5. reward-improvement artifacts for before/after evidence.
 
+## Theme #3: World Modeling Fit
+
+This project models a partially observable enterprise data-operations workflow. The hidden world state is a mutable business dataset, while the agent only receives observations such as schema, shape, missing-value counts, duplicate counts, and action history. The agent must keep state across multiple API calls and choose workflow actions that causally improve the underlying dataset.
+
+Enterprise workflow represented:
+- CRM contact cleanup (`task_missing_values`)
+- billing invoice duplicate handling (`task_duplicate_handling`)
+- support ticket validation (`task_complex_validation`)
+
+Validation demo:
+
+```bash
+python world_modeling_demo.py
+```
+
+The demo prints reset state, each action, reward, before/after missing and duplicate counts, and final grader score.
+
 ## What changed for submission hardening
 
 - Added deterministic seed plumbing in `src/environment.py` and `inference.py`.
@@ -132,13 +149,19 @@ Baseline inference:
 INFERENCE_BACKEND=local python inference.py
 ```
 
-The local backend is deterministic and does not call any external API. When a model API key is available, use:
+The local backend is deterministic and does not call any external API. Temporary Gemini validation can use Google AI Studio keys through the OpenAI-compatible Gemini endpoint:
 
 ```bash
-OPENAI_API_KEY=sk_... INFERENCE_BACKEND=api python inference.py
+GEMINI_API_KEY=... INFERENCE_BACKEND=gemini MODEL_NAME=gemini-2.5-flash python inference.py
 ```
 
-By default, `INFERENCE_BACKEND=auto` uses the API only when `OPENAI_API_KEY` or `MODEL_API_KEY` is present; otherwise it uses the local policy.
+When an OpenAI key is available at the venue, use:
+
+```bash
+OPENAI_API_KEY=sk_... INFERENCE_BACKEND=openai MODEL_NAME=gpt-4 python inference.py
+```
+
+By default, `INFERENCE_BACKEND=auto` uses Gemini when `GEMINI_API_KEY` is present, then OpenAI-compatible API mode when `OPENAI_API_KEY` or `MODEL_API_KEY` is present, otherwise it uses the local policy.
 
 Generic OpenAI-compatible providers can be configured with:
 
