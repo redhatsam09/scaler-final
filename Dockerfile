@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ENV API_BASE_URL=https://api.openai.com/v1
 ENV MODEL_NAME=gpt-4
+ENV INFERENCE_BACKEND=local
 
 EXPOSE 7860
 

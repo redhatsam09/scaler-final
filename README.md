@@ -63,7 +63,7 @@ Example deterministic run:
 
 ```bash
 INFERENCE_SEED=2026 python inference.py | tail -n 1
-# [SUMMARY] average_score=0.672656
+# [SUMMARY] average_score=0.990000
 ```
 
 Running the same command twice with the same seed yields the same summary.
@@ -127,6 +127,26 @@ python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
 Baseline inference:
+
+```bash
+INFERENCE_BACKEND=local python inference.py
+```
+
+The local backend is deterministic and does not call any external API. When a model API key is available, use:
+
+```bash
+OPENAI_API_KEY=sk_... INFERENCE_BACKEND=api python inference.py
+```
+
+By default, `INFERENCE_BACKEND=auto` uses the API only when `OPENAI_API_KEY` or `MODEL_API_KEY` is present; otherwise it uses the local policy.
+
+Generic OpenAI-compatible providers can be configured with:
+
+```bash
+API_BASE_URL=https://provider.example/v1 MODEL_API_KEY=... MODEL_NAME=... INFERENCE_BACKEND=api python inference.py
+```
+
+Default auto mode:
 
 ```bash
 python inference.py

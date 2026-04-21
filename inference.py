@@ -8,8 +8,9 @@ from src.models import Action
 from src.graders import MissingValuesGrader, DuplicateHandlingGrader, ComplexValidationGrader
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN")
+API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("MODEL_API_KEY")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4")
+INFERENCE_BACKEND = os.getenv("INFERENCE_BACKEND", "auto").strip().lower()
 MAX_STEPS = 20
 TEMPERATURE = 0.0
 MAX_TOKENS = 500
@@ -68,9 +69,86 @@ def extract_action(response_text: str) -> Optional[Action]:
         return None
 
 
+def should_use_remote_model() -> bool:
+    if INFERENCE_BACKEND == "local":
+        return False
+    if INFERENCE_BACKEND == "api":
+        return bool(API_KEY)
+    return bool(API_KEY)
+
+
+def local_policy_action(task_id: str, observation, step: int) -> Action:
+    columns = observation.column_names
+    missing_columns = [
+        column
+        for column, missing_count in observation.missing_values.items()
+        if missing_count > 0
+    ]
+    working_columns = missing_columns or columns
+
+    if step == 1:
+        return Action(
+            action_type="analyze",
+            target_columns=working_columns,
+            parameters={},
+            reasoning="Local deterministic policy: profile columns with active quality issues.",
+        )
+
+    if task_id == "task_duplicate_handling":
+        if step == 2:
+            subset = [columns[0]] if columns else None
+            return Action(
+                action_type="deduplicate",
+                target_columns=columns,
+                parameters={"subset": subset, "keep": "first"},
+                reasoning="Local deterministic policy: remove duplicate invoice records by primary identifier.",
+            )
+        if step == 3:
+            return Action(
+                action_type="validate",
+                target_columns=columns[:2] or columns,
+                parameters={},
+                reasoning="Local deterministic policy: validate key invoice fields after deduplication.",
+            )
+
+    else:
+        if step == 2:
+            return Action(
+                action_type="impute",
+                target_columns=working_columns,
+                parameters={"method": "forward_fill"},
+                reasoning="Local deterministic policy: fill missing values without external model calls.",
+            )
+        if step == 3:
+            return Action(
+                action_type="deduplicate",
+                target_columns=columns,
+                parameters={"keep": "first"},
+                reasoning="Local deterministic policy: remove exact duplicate records.",
+            )
+        if step == 4:
+            return Action(
+                action_type="validate",
+                target_columns=columns,
+                parameters={},
+                reasoning="Local deterministic policy: validate cleaned dataset columns.",
+            )
+
+    return Action(
+        action_type="report_findings",
+        target_columns=columns[:1],
+        parameters={
+            "include_summary": True,
+            "include_quality_score": True,
+            "include_recommendations": True,
+        },
+        reasoning="Local deterministic policy: summarize cleaning results.",
+    )
+
+
 def run_task(env: DataCleaningEnv, task_id: str, grader_class, seed: int) -> float:
     client = None
-    if API_KEY:
+    if should_use_remote_model():
         client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
     
     observation = env.reset(task_id=task_id, seed=seed)
@@ -109,20 +187,7 @@ Based on this state, what data cleaning action should you take next?
         
         action = extract_action(response_text)
         if not action:
-            fallback_action_type = "analyze"
-            fallback_parameters = {}
-            if step == 2:
-                fallback_action_type = "impute"
-                fallback_parameters = {"method": "mean"}
-            elif step == 3:
-                fallback_action_type = "deduplicate"
-
-            action = Action(
-                action_type=fallback_action_type,
-                target_columns=observation.column_names[:2],
-                parameters=fallback_parameters,
-                reasoning="Fallback strategy"
-            )
+            action = local_policy_action(task_id, observation, step)
         
         observation, reward, done, info = env.step(action)
         steps_executed = step

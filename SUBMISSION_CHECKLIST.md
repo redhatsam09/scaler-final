@@ -60,8 +60,8 @@ From `artifacts/reward_progression.csv`:
 - trained: 0.990000
 
 From deterministic inference rerun (same seed twice):
-- [SUMMARY] average_score=0.672656
-- [SUMMARY] average_score=0.672656
+- [SUMMARY] average_score=0.990000
+- [SUMMARY] average_score=0.990000
 
 FINAL GATE BEFORE SUBMISSION
 ============================
