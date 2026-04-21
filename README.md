@@ -140,7 +140,8 @@ openenv validate
 
 ## Submission links (fill with your final public URLs)
 
-- Hugging Face Space URL: `REPLACE_WITH_FINAL_SPACE_URL`
+- Hugging Face Space URL: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
+- Live API base URL: `https://samdutta123-scaler-final-openenv.hf.space`
 - Colab notebook URL: `REPLACE_WITH_FINAL_COLAB_URL`
 - Mini-blog URL: `REPLACE_WITH_FINAL_BLOG_URL`
 - Mini-video URL (<2 min): `REPLACE_WITH_FINAL_VIDEO_URL`

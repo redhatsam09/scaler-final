@@ -34,8 +34,8 @@ REQUIRED DELIVERABLES
     - `requirements.txt`, `pyproject.toml`, and `setup.py` aligned
     - `openenv-core` explicitly listed in install requirements
 
-[ ] Live Hugging Face Space URL (public)
-    - Add final URL to README placeholders
+[✓] Live Hugging Face Space URL (public)
+    - https://huggingface.co/spaces/samdutta123/scaler-final-openenv
 
 [ ] Public Colab URL (for judges)
     - Add final URL to README placeholders

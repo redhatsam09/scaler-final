@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Not yet fully ready for final external submission** because public links are still placeholders.
+**Not yet fully ready for final external submission** because the public Colab and blog/video links are still placeholders.
 
 ## What is complete in-repo
 
@@ -13,14 +13,14 @@
 - Colab notebook artifact
 - Reward-improvement evidence artifacts
 - Dependency alignment cleanup
+- Live Hugging Face Space: https://huggingface.co/spaces/samdutta123/scaler-final-openenv
 
 ## Blocking items (external links)
 
 Replace these placeholders in `README.md` with real public URLs:
 
-1. `REPLACE_WITH_FINAL_SPACE_URL`
-2. `REPLACE_WITH_FINAL_COLAB_URL`
-3. `REPLACE_WITH_FINAL_BLOG_URL` or `REPLACE_WITH_FINAL_VIDEO_URL`
+1. `REPLACE_WITH_FINAL_COLAB_URL`
+2. `REPLACE_WITH_FINAL_BLOG_URL` or `REPLACE_WITH_FINAL_VIDEO_URL`
 
 ## Evidence references
 
