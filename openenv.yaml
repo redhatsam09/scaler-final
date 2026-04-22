@@ -1,6 +1,6 @@
 name: data-cleaning-env
 version: 1.0.0
-description: Real-world data cleaning and validation environment for training AI agents
+description: Multi-app enterprise orchestration environment with schema drift and actor coordination
 author: OpenEnv Community
 openenv_version: "1.0"
 
@@ -29,6 +29,12 @@ tasks:
     difficulty: hard
     grader: src.graders:ComplexValidationGrader
 
+  - id: task_enterprise_orchestration
+    name: Multi-App Enterprise Workflow Orchestration
+    description: Coordinate CRM, Billing, and Support workflows under schema drift and actor escalations
+    difficulty: hard
+    grader: src.graders:EnterpriseOrchestrationGrader
+
 features:
-  max_steps: 50
+  max_steps: 60
   episode_timeout: 300

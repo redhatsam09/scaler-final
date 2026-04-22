@@ -1,6 +1,8 @@
+from typing import List
+
 import pandas as pd
-from typing import Dict, Any
-from src.environment import DataCleaningEnv, EpisodeState
+
+from src.environment import EpisodeState
 
 
 MIN_TASK_SCORE = 0.01
@@ -15,143 +17,194 @@ def _strict_task_score(value: float) -> float:
     return float(value)
 
 
+def _action_count(episode_state: EpisodeState, action_name: str) -> int:
+    return sum(1 for action in episode_state.actions_taken if action.get("action_type") == action_name)
+
+
+def _has_action(episode_state: EpisodeState, action_name: str) -> bool:
+    return _action_count(episode_state, action_name) > 0
+
+
+def _loop_penalty(episode_state: EpisodeState) -> float:
+    if len(episode_state.actions_taken) < 3:
+        return 0.0
+    penalties = 0.0
+    for idx in range(2, len(episode_state.actions_taken)):
+        triple = [
+            episode_state.actions_taken[idx - 2].get("action_type"),
+            episode_state.actions_taken[idx - 1].get("action_type"),
+            episode_state.actions_taken[idx].get("action_type"),
+        ]
+        if len(set(triple)) == 1:
+            penalties += 0.04
+    return min(0.2, penalties)
+
+
+def _excessive_deletion_penalty(episode_state: EpisodeState) -> float:
+    original_len = len(episode_state.original_dataset)
+    current_len = len(episode_state.dataset)
+    if original_len <= 0:
+        return 0.0
+    deletion_ratio = max(0.0, (original_len - current_len) / original_len)
+    if deletion_ratio <= 0.35:
+        return 0.0
+    return min(0.25, (deletion_ratio - 0.35) * 0.8)
+
+
+def _kpi_component(episode_state: EpisodeState) -> float:
+    if not episode_state.kpis:
+        return 0.0
+    quality = episode_state.kpis.get("quality_index", 0.0)
+    compliance = episode_state.kpis.get("policy_compliance", 0.0)
+    latency = episode_state.kpis.get("workflow_latency", 0.0)
+    return min(1.0, max(0.0, quality * 0.5 + compliance * 0.3 + latency * 0.2))
+
+
+def _common_penalties(episode_state: EpisodeState) -> float:
+    return _loop_penalty(episode_state) + _excessive_deletion_penalty(episode_state)
+
+
 class MissingValuesGrader:
-    
     @staticmethod
     def grade(episode_state: EpisodeState) -> float:
         dataset = episode_state.dataset
         original_dataset = episode_state.original_dataset
-        
-        original_missing = original_dataset.isnull().sum().sum()
-        current_missing = dataset.isnull().sum().sum()
-        
-        if original_missing == 0:
-            return _strict_task_score(0.5)
-        
-        reduction = (original_missing - current_missing) / original_missing
-        
-        analysis_performed = any(
-            a['action_type'] == 'analyze' 
-            for a in episode_state.actions_taken
-        )
-        
-        imputation_performed = any(
-            a['action_type'] == 'impute' 
-            for a in episode_state.actions_taken
-        )
-        
-        base_score = max(0.0, reduction)
-        
-        if analysis_performed:
-            base_score += 0.15
-        
-        if imputation_performed:
-            base_score += 0.25
-        
+        original_missing = float(original_dataset.isnull().sum().sum())
+        current_missing = float(dataset.isnull().sum().sum())
+
+        if original_missing <= 0:
+            base = 0.45
+        else:
+            base = max(0.0, (original_missing - current_missing) / original_missing)
+
+        if _has_action(episode_state, "analyze"):
+            base += 0.10
+        if _has_action(episode_state, "impute"):
+            base += 0.20
+        if _has_action(episode_state, "validate"):
+            base += 0.10
         if current_missing == 0:
-            base_score = min(1.0, base_score + 0.2)
-        
-        return _strict_task_score(min(1.0, base_score))
+            base += 0.15
+
+        base += _kpi_component(episode_state) * 0.12
+        base -= _common_penalties(episode_state)
+        return _strict_task_score(min(1.0, max(0.0, base)))
 
 
 class DuplicateHandlingGrader:
-    
     @staticmethod
     def grade(episode_state: EpisodeState) -> float:
         dataset = episode_state.dataset
         original_dataset = episode_state.original_dataset
-        
-        original_dups = original_dataset.duplicated(subset=None, keep=False).sum()
-        current_dups = dataset.duplicated(subset=None, keep=False).sum()
-        
-        if original_dups == 0:
-            return _strict_task_score(0.4)
-        
-        dedup_performed = any(
-            a['action_type'] == 'deduplicate' 
-            for a in episode_state.actions_taken
-        )
-        
-        if not dedup_performed:
-            return _strict_task_score(0.2)
-        
-        reduction = (original_dups - current_dups) / original_dups
-        base_score = max(0.0, reduction)
-        
+        original_dups = float(original_dataset.duplicated(subset=None, keep=False).sum())
+        current_dups = float(dataset.duplicated(subset=None, keep=False).sum())
+
+        if original_dups <= 0:
+            base = 0.4
+        else:
+            base = max(0.0, (original_dups - current_dups) / original_dups)
+
+        if _has_action(episode_state, "deduplicate"):
+            base += 0.2
+        if _has_action(episode_state, "analyze"):
+            base += 0.08
+        if _has_action(episode_state, "validate"):
+            base += 0.1
+        if _has_action(episode_state, "report_findings"):
+            base += 0.05
         if current_dups == 0:
-            base_score = min(1.0, base_score + 0.3)
-        
-        validation_performed = any(
-            a['action_type'] == 'validate' 
-            for a in episode_state.actions_taken
-        )
-        
-        if validation_performed:
-            base_score = min(1.0, base_score + 0.1)
-        
-        return _strict_task_score(min(1.0, base_score))
+            base += 0.15
+
+        if not _has_action(episode_state, "analyze"):
+            base -= 0.12
+        if not _has_action(episode_state, "validate"):
+            base -= 0.12
+
+        base += _kpi_component(episode_state) * 0.1
+        base -= _common_penalties(episode_state)
+        return _strict_task_score(min(1.0, max(0.0, base)))
 
 
 class ComplexValidationGrader:
-    
     @staticmethod
     def grade(episode_state: EpisodeState) -> float:
         dataset = episode_state.dataset
         original_dataset = episode_state.original_dataset
-        
-        score = 0.0
-        
-        missing_pct_original = (original_dataset.isnull().sum().sum() / 
-                               (len(original_dataset) * len(original_dataset.columns)))
-        missing_pct_current = (dataset.isnull().sum().sum() / 
-                              (len(dataset) * len(dataset.columns)))
-        
-        missing_improvement = max(0.0, (missing_pct_original - missing_pct_current) / missing_pct_original if missing_pct_original > 0 else 0.5)
-        score += missing_improvement * 0.25
-        
-        dup_pct_original = original_dataset.duplicated(subset=None, keep=False).sum() / len(original_dataset)
-        dup_pct_current = dataset.duplicated(subset=None, keep=False).sum() / len(dataset)
-        
-        dup_improvement = max(0.0, (dup_pct_original - dup_pct_current) / dup_pct_original if dup_pct_original > 0 else 0.5)
-        score += dup_improvement * 0.20
-        
-        actions_count = len(episode_state.actions_taken)
-        action_diversity = len(set(a['action_type'] for a in episode_state.actions_taken))
-        
-        if actions_count >= 5:
-            score += 0.15
-        elif actions_count >= 3:
-            score += 0.10
-        else:
-            score += 0.05
-        
-        if action_diversity >= 3:
-            score += 0.10
-        elif action_diversity >= 2:
-            score += 0.05
-        
-        validation_performed = any(
-            a['action_type'] == 'validate' 
-            for a in episode_state.actions_taken
+
+        original_missing = float(original_dataset.isnull().sum().sum())
+        current_missing = float(dataset.isnull().sum().sum())
+        missing_gain = (
+            max(0.0, (original_missing - current_missing) / max(original_missing, 1.0)) if original_missing > 0 else 0.5
         )
-        
-        if validation_performed:
-            score += 0.15
-        
-        analysis_performed = any(
-            a['action_type'] == 'analyze' 
-            for a in episode_state.actions_taken
+
+        original_dups = float(original_dataset.duplicated(subset=None, keep=False).sum())
+        current_dups = float(dataset.duplicated(subset=None, keep=False).sum())
+        dup_gain = max(0.0, (original_dups - current_dups) / max(original_dups, 1.0)) if original_dups > 0 else 0.5
+
+        action_diversity = len(set(action.get("action_type") for action in episode_state.actions_taken))
+        diversity_score = min(1.0, action_diversity / 6.0)
+
+        strategic_bonus = 0.0
+        if _has_action(episode_state, "analyze"):
+            strategic_bonus += 0.08
+        if _has_action(episode_state, "validate"):
+            strategic_bonus += 0.1
+        if _has_action(episode_state, "report_findings"):
+            strategic_bonus += 0.05
+        if _has_action(episode_state, "reconcile_apps"):
+            strategic_bonus += 0.12
+        if episode_state.drift_active and _has_action(episode_state, "validate"):
+            strategic_bonus += 0.08
+
+        base = missing_gain * 0.25 + dup_gain * 0.2 + diversity_score * 0.2 + strategic_bonus
+        base += _kpi_component(episode_state) * 0.15
+        base -= _common_penalties(episode_state)
+        return _strict_task_score(min(1.0, max(0.0, base)))
+
+
+class EnterpriseOrchestrationGrader:
+    @staticmethod
+    def grade(episode_state: EpisodeState) -> float:
+        dataset = episode_state.dataset
+        original_dataset = episode_state.original_dataset
+
+        missing_before = float(original_dataset.isnull().sum().sum())
+        missing_after = float(dataset.isnull().sum().sum())
+        missing_gain = max(0.0, (missing_before - missing_after) / max(missing_before, 1.0))
+
+        dup_before = float(original_dataset.duplicated(subset=None, keep=False).sum())
+        dup_after = float(dataset.duplicated(subset=None, keep=False).sum())
+        dup_gain = max(0.0, (dup_before - dup_after) / max(dup_before, 1.0))
+
+        delegated = len(episode_state.delegated_work)
+        resolved = sum(1 for status in episode_state.delegated_work.values() if status == "resolved")
+        delegation_score = 0.0
+        if delegated > 0:
+            delegation_score = 0.4 + 0.6 * (resolved / delegated)
+
+        drift_handled = 0.0
+        if episode_state.drift_active and "compliance_tier" in dataset.columns:
+            known = float((dataset["compliance_tier"] != "unknown").mean())
+            drift_handled = known
+
+        cross_app_alignment = 0.0
+        if {"invoice_status", "ticket_status"}.issubset(dataset.columns):
+            conflicts = ((dataset["invoice_status"] == "overdue") & (dataset["ticket_status"] == "resolved")).sum()
+            cross_app_alignment = 1.0 - float(conflicts) / max(float(len(dataset)), 1.0)
+
+        action_diversity = len(set(action.get("action_type") for action in episode_state.actions_taken))
+        diversity = min(1.0, action_diversity / 7.0)
+
+        base = (
+            missing_gain * 0.2
+            + dup_gain * 0.15
+            + delegation_score * 0.2
+            + drift_handled * 0.15
+            + cross_app_alignment * 0.12
+            + diversity * 0.08
+            + _kpi_component(episode_state) * 0.1
         )
-        
-        if analysis_performed:
-            score += 0.10
-        
-        report_generated = any(
-            a['action_type'] == 'report_findings' 
-            for a in episode_state.actions_taken
-        )
-        
-        if report_generated:
-            score += 0.05
-        
-        return _strict_task_score(min(1.0, score))
+        if _has_action(episode_state, "report_findings"):
+            base += 0.05
+        base -= _common_penalties(episode_state)
+        return _strict_task_score(min(1.0, max(0.0, base)))

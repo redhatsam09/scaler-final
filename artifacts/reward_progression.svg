@@ -1,16 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="600" height="280">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="320">
 <rect width="100%" height="100%" fill="#ffffff"/>
-<text x="60" y="16" font-size="14" font-family="Arial">Reward Improvement Over Training Stages</text>
-<line x1="60" y1="220" x2="560" y2="220" stroke="#333"/>
-<line x1="60" y1="20" x2="60" y2="220" stroke="#333"/>
-<polyline fill="none" stroke="#2563eb" stroke-width="3" points="60,209 310,47 560,30"/>
-<circle cx="60" cy="209" r="4" fill="#2563eb"/>
-<text x="34" y="238" font-size="11" font-family="Arial">baseline</text>
-<text x="42" y="201" font-size="11" font-family="Arial">0.656</text>
-<circle cx="310" cy="47" r="4" fill="#2563eb"/>
-<text x="284" y="238" font-size="11" font-family="Arial">mid</text>
-<text x="292" y="39" font-size="11" font-family="Arial">0.959</text>
-<circle cx="560" cy="30" r="4" fill="#2563eb"/>
-<text x="534" y="238" font-size="11" font-family="Arial">trained</text>
-<text x="542" y="22" font-size="11" font-family="Arial">0.990</text>
+<text x="80" y="16" font-size="14" font-family="Arial">Reward Improvement: Baseline vs Mid vs Trained</text>
+<line x1="80" y1="245" x2="720" y2="245" stroke="#222"/>
+<line x1="80" y1="25" x2="80" y2="245" stroke="#222"/>
+<polyline fill="none" stroke="#2563eb" stroke-width="3" points="80,225 400,102 720,44"/>
+<text x="86" y="37" font-size="11" font-family="Arial">y: average reward/grade</text>
+<text x="545" y="265" font-size="11" font-family="Arial">x-axis: policy stage</text>
+<circle cx="80" cy="225" r="4" fill="#2563eb"/>
+<text x="62" y="263" font-size="11" font-family="Arial">baseline</text>
+<text x="60" y="217" font-size="11" font-family="Arial">0.443</text>
+<circle cx="400" cy="102" r="4" fill="#2563eb"/>
+<text x="382" y="263" font-size="11" font-family="Arial">mid</text>
+<text x="380" y="94" font-size="11" font-family="Arial">0.636</text>
+<circle cx="720" cy="44" r="4" fill="#2563eb"/>
+<text x="702" y="263" font-size="11" font-family="Arial">trained</text>
+<text x="700" y="36" font-size="11" font-family="Arial">0.727</text>
 </svg>

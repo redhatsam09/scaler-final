@@ -2,36 +2,33 @@
 
 ## Current status
 
-**Not yet fully ready for final external submission** because the public Colab and blog/video links are still placeholders.
+**Technically strong and near-final**, blocked only by public external links (Colab/blog/video placeholders).
 
-## What is complete in-repo
+## Competitive improvements completed
 
-- OpenEnv environment implementation and API
-- Deterministic seeding controls
-- Session-scoped API state
-- TRL training pipeline script
-- Colab notebook artifact
-- Reward-improvement evidence artifacts
-- Dependency alignment cleanup
-- Theme #3 world-modeling demo (`python world_modeling_demo.py`)
-- Gemini temporary inference backend with local fallback (`gemini-3-flash-preview`)
-- Video demo guide (`VIDEO_DEMO_GUIDE.md`)
-- Live Hugging Face Space: https://huggingface.co/spaces/samdutta123/scaler-final-openenv
+- Added a new high-difficulty task: `task_enterprise_orchestration`
+- Added multi-actor behavior (`delegate`, `resolve_alert`) and cross-app reconciliation (`reconcile_apps`)
+- Added mid-episode schema drift and policy-contract updates
+- Added anti-gaming reward logic and rubric-style graders
+- Added environment-grounded training script and generated training curve artifacts
+- Added baseline/mid/trained evaluation script against held-out seeds
+- Updated docs/story to map directly to judging criteria
 
 ## Blocking items (external links)
 
-Replace these placeholders in `README.md` with real public URLs:
+Replace placeholders in `README.md`:
 
 1. `REPLACE_WITH_FINAL_COLAB_URL`
 2. `REPLACE_WITH_FINAL_BLOG_URL` or `REPLACE_WITH_FINAL_VIDEO_URL`
 
 ## Evidence references
 
+- `artifacts/trl_sft_training_metrics.json`
+- `artifacts/training_curve.csv`
+- `artifacts/training_curve.json`
+- `artifacts/training_curve.svg`
 - `artifacts/reward_progression.csv`
 - `artifacts/reward_progression.json`
 - `artifacts/reward_progression.svg`
-- `artifacts/trl_sft_training_metrics.json`
-- `training/colab_trl_sft_notebook.ipynb`
-- `training/trl_sft_training.py`
 - `world_modeling_demo.py`
 - `VIDEO_DEMO_GUIDE.md`

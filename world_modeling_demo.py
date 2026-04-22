@@ -1,5 +1,10 @@
 from src.environment import DataCleaningEnv
-from src.graders import MissingValuesGrader, DuplicateHandlingGrader, ComplexValidationGrader
+from src.graders import (
+    MissingValuesGrader,
+    DuplicateHandlingGrader,
+    ComplexValidationGrader,
+    EnterpriseOrchestrationGrader,
+)
 from inference import local_policy_action
 
 
@@ -7,6 +12,7 @@ TASKS = [
     ("task_missing_values", MissingValuesGrader),
     ("task_duplicate_handling", DuplicateHandlingGrader),
     ("task_complex_validation", ComplexValidationGrader),
+    ("task_enterprise_orchestration", EnterpriseOrchestrationGrader),
 ]
 
 
@@ -14,15 +20,16 @@ def _state_line(state: dict) -> str:
     return (
         f"dataset={state['dataset_name']} shape={state['dataset_shape']} "
         f"missing={state['missing_values_count']} duplicates={state['duplicates_count']} "
-        f"actions={state['actions']}"
+        f"actions={state['actions']} drift={state.get('drift_active')} "
+        f"kpi={state.get('kpi_snapshot')}"
     )
 
 
 def run_demo() -> None:
     print("WORLD MODELING VALIDATION DEMO")
-    print("Hidden world state: enterprise business dataset")
-    print("Visible observation: schema, missing-value counts, shape, progress summary")
-    print("Agent actions: analyze -> clean -> validate -> report")
+    print("Hidden world state: multi-app enterprise dataset (CRM + Billing + Support)")
+    print("Visible observation: schema, missing/duplicate counts, KPIs, actor messages")
+    print("Agent actions: analyze -> delegate/reconcile -> validate -> report")
     print()
 
     for task_index, (task_id, grader_class) in enumerate(TASKS):
@@ -31,7 +38,7 @@ def run_demo() -> None:
         print(f"TASK {task_id}")
         print(f"reset: {_state_line(env.state())}")
 
-        for step in range(1, 6):
+        for step in range(1, 8):
             before = env.state()
             action = local_policy_action(task_id, observation, step)
             observation, reward, done, _info = env.step(action)
@@ -41,8 +48,13 @@ def run_demo() -> None:
                 f"step={step} action={action.action_type} reward={reward.value:.3f} "
                 f"missing {before['missing_values_count']}->{after['missing_values_count']} "
                 f"duplicates {before['duplicates_count']}->{after['duplicates_count']} "
+                f"drift={after.get('drift_active')} "
                 f"grade={score:.3f}"
             )
+            if after.get("actor_messages"):
+                print(f"  actors: {after['actor_messages'][-1]}")
+            if after.get("drift_notice"):
+                print(f"  drift_notice: {after['drift_notice']}")
             if done:
                 break
 

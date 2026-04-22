@@ -1,4 +1,4 @@
-stage,average_score
-baseline,0.655990
-mid,0.958862
-trained,0.990000
+stage,average_score,std_score
+baseline,0.442923,0.097888
+mid,0.636090,0.203447
+trained,0.726893,0.160171

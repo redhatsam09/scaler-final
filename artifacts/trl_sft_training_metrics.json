@@ -1,8 +1,88 @@
 {
-  "base_model": "distilgpt2",
-  "train_examples": 3,
-  "train_runtime": 2.2001,
-  "train_steps_per_second": 0.909,
-  "train_loss": 4.010271787643433,
-  "global_step": null
+  "training_mode": "environment_grounded_policy_search",
+  "optimizer": "hill_climbing_over_action_programs",
+  "episodes_per_task_baseline": 6,
+  "episodes_per_task_eval": 10,
+  "iterations": 60,
+  "accepted_updates": 18,
+  "baseline_average_score": 0.476924,
+  "trained_average_score": 0.72203,
+  "improvement": 0.245106,
+  "baseline_std": 0.233253,
+  "trained_std": 0.156272,
+  "task_scores_baseline": {
+    "task_missing_values": 0.700224,
+    "task_duplicate_handling": 0.09359,
+    "task_complex_validation": 0.612486,
+    "task_enterprise_orchestration": 0.501395
+  },
+  "task_scores_trained": {
+    "task_missing_values": 0.885896,
+    "task_duplicate_handling": 0.513478,
+    "task_complex_validation": 0.858523,
+    "task_enterprise_orchestration": 0.630221
+  },
+  "task_improvement": {
+    "task_missing_values": 0.185672,
+    "task_duplicate_handling": 0.419888,
+    "task_complex_validation": 0.246036,
+    "task_enterprise_orchestration": 0.128827
+  },
+  "action_distribution": {
+    "deduplicate": 3,
+    "impute": 3,
+    "validate": 4,
+    "analyze": 3,
+    "report_findings": 4,
+    "reconcile_apps": 4,
+    "resolve_alert": 2,
+    "delegate": 1
+  },
+  "artifacts": {
+    "policy": "artifacts/learned_policy.json",
+    "policy_snapshots": "artifacts/policy_snapshots.json",
+    "training_curve_json": "artifacts/training_curve.json",
+    "training_curve_csv": "artifacts/training_curve.csv",
+    "training_curve_svg": "artifacts/training_curve.svg"
+  },
+  "evaluation_rows": [
+    {
+      "stage": "baseline",
+      "average_score": 0.44292304316752745,
+      "std_score": 0.09788836655120305,
+      "task_scores": {
+        "task_missing_values": 0.500180825,
+        "task_duplicate_handling": 0.2735729750000001,
+        "task_complex_validation": 0.49377098750000004,
+        "task_enterprise_orchestration": 0.5041673851701097
+      }
+    },
+    {
+      "stage": "mid",
+      "average_score": 0.636089945017393,
+      "std_score": 0.2034471847693445,
+      "task_scores": {
+        "task_missing_values": 0.8492209755268001,
+        "task_duplicate_handling": 0.31359972916666673,
+        "task_complex_validation": 0.7475652394603741,
+        "task_enterprise_orchestration": 0.6339738359157309
+      }
+    },
+    {
+      "stage": "trained",
+      "average_score": 0.7268932173072299,
+      "std_score": 0.1601711969347782,
+      "task_scores": {
+        "task_missing_values": 0.9000517236221387,
+        "task_duplicate_handling": 0.5137167750000001,
+        "task_complex_validation": 0.8591984503490017,
+        "task_enterprise_orchestration": 0.6346059202577788
+      }
+    }
+  ],
+  "reward_progression_artifacts": {
+    "csv": "artifacts/reward_progression.csv",
+    "json": "artifacts/reward_progression.json",
+    "svg": "artifacts/reward_progression.svg"
+  }
 }

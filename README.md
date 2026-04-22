@@ -8,125 +8,70 @@ app_port: 7860
 pinned: false
 ---
 
-# Data Cleaning Environment (OpenEnv)
+# OpenEnv Multi-App Enterprise Orchestration Environment
 
-This repository provides an OpenEnv-compatible data cleaning environment with:
-1. deterministic environment behavior through explicit seeding,
-2. session-isolated API state for concurrent use,
-3. a baseline inference runner,
-4. a minimal Hugging Face TRL training pipeline and Colab notebook artifact,
-5. reward-improvement artifacts for before/after evidence.
+An OpenEnv environment for **Theme #3 World Modeling (Professional Tasks)** with strong overlap to:
+- **Theme #1 Multi-Agent Interactions** (delegation + actor escalations),
+- **Theme #2 Long-Horizon Planning** (schema drift + delayed coordination effects),
+- Patronus-style **schema/policy drift** behavior.
 
-## Theme #3: World Modeling Fit
+The environment simulates CRM + Billing + Support workflows in one partially observable world. Agents must choose tool actions, coordinate multiple actors, handle contract drift, and improve enterprise KPIs over multi-step episodes.
 
-This project models a partially observable enterprise data-operations workflow. The hidden world state is a mutable business dataset, while the agent only receives observations such as schema, shape, missing-value counts, duplicate counts, and action history. The agent must keep state across multiple API calls and choose workflow actions that causally improve the underlying dataset.
+## Why this is competitive
 
-Enterprise workflow represented:
-- CRM contact cleanup (`task_missing_values`)
-- billing invoice duplicate handling (`task_duplicate_handling`)
-- support ticket validation (`task_complex_validation`)
+This project is designed around the judging rubric:
+- **Innovation (40%)**: multi-app orchestration + actor coordination + drift.
+- **Storytelling (30%)**: clear demo script and evidence artifacts.
+- **Reward improvement evidence (20%)**: baseline vs mid vs trained reward curves from real environment rollouts.
+- **Reward/training pipeline (10%)**: environment-grounded policy optimization and grading.
 
-Validation demo:
+## Environment design
 
-```bash
-python world_modeling_demo.py
-```
+### Tasks
 
-The demo prints reset state, each action, reward, before/after missing and duplicate counts, and final grader score.
+- `task_missing_values`: CRM quality repair.
+- `task_duplicate_handling`: Billing deduplication and consistency.
+- `task_complex_validation`: Support quality validation under mixed constraints.
+- `task_enterprise_orchestration`: **new hard task** combining CRM/Billing/Support with multi-actor delegation and schema drift.
 
-For a recording walkthrough with exact commands and talking points, see `VIDEO_DEMO_GUIDE.md`.
+### Agent actions
 
-## What changed for submission hardening
+- `analyze`
+- `impute`
+- `deduplicate`
+- `validate`
+- `report_findings`
+- `delegate`
+- `resolve_alert`
+- `reconcile_apps`
 
-- Added deterministic seed plumbing in `src/environment.py` and `inference.py`.
-- Added session-based environment management in `server/app.py` via `session_id`.
-- Added training assets in `training/`:
-  - `training/trl_sft_training.py`
-  - `training/colab_trl_sft_notebook.ipynb`
-  - `training/evaluate_reward_improvement.py`
-- Added evidence artifacts in `artifacts/`:
-  - `reward_progression.csv`
-  - `reward_progression.json`
-  - `reward_progression.svg`
-  - `trl_sft_training_metrics.json`
-- Aligned dependency definitions across `pyproject.toml`, `requirements.txt`, and `setup.py`.
+### World modeling dynamics
 
-## Environment API
+- Hidden mutable dataset state.
+- Partial observations (`missing_values`, schema/dtypes, KPI snapshots, actor messages).
+- Mid-episode schema/policy drift in enterprise task:
+  - new `compliance_tier` field,
+  - invoice status contract change (`pending` → `awaiting_payment`),
+  - new compliance validation requirement.
 
-### Endpoints
+### Anti-gaming reward design
 
-- `POST /reset` (or `/reset/`)
+- Per-step shaped progress signal.
+- Rubric-style task graders.
+- Loop penalties for repeated action spam.
+- Over-deletion penalties for destructive shortcuts.
+- KPI-aware scoring (quality/compliance/latency).
+
+## API
+
+Endpoints:
+- `POST /reset`
 - `POST /step`
 - `POST /state`
 - `POST /grade`
 - `GET /health`
 
-### Sessionized behavior
-
-`/reset` now returns `session_id`. Use that `session_id` for subsequent calls.
-
-Reset request sources:
-- `session_id`: query param, `x-session-id` header, or JSON body
-- `task_id`: query param or JSON body
-- `seed`: query param or JSON body
-
-If `session_id` is omitted in `/reset`, a UUID is generated and returned.
-
-## Determinism and reproducibility
-
-- `DataCleaningEnv` supports `reset(task_id=..., seed=...)`.
-- Python and NumPy RNGs are explicitly seeded.
-- `inference.py` uses `INFERENCE_SEED` and sets `TEMPERATURE=0.0`.
-
-Example deterministic run:
-
-```bash
-INFERENCE_SEED=2026 python inference.py | tail -n 1
-# [SUMMARY] average_score=0.990000
-```
-
-Running the same command twice with the same seed yields the same summary.
-
-## Training deliverables (TRL + Colab)
-
-### Local TRL script
-
-```bash
-pip install -r requirements.txt
-pip install trl transformers datasets accelerate torch
-python training/trl_sft_training.py
-```
-
-Outputs:
-- `artifacts/trl_sft_training_metrics.json`
-- `artifacts/trl_sft_checkpoint/` (ignored in git via `.gitignore`)
-
-### Colab notebook
-
-- `training/colab_trl_sft_notebook.ipynb`
-
-Use this notebook to reproduce a minimal TRL SFT run in Colab and export metrics.
-
-## Reward-improvement evidence
-
-Generate evidence:
-
-```bash
-python training/evaluate_reward_improvement.py
-```
-
-Generated artifacts:
-- `artifacts/reward_progression.csv`
-- `artifacts/reward_progression.json`
-- `artifacts/reward_progression.svg`
-
-Current staged progression in `reward_progression.csv`:
-
-| stage | average_score |
-| --- | --- |
-| baseline | 0.655990 |
-| mid | 0.958862 |
-| trained | 0.990000 |
+`/reset` returns `session_id`; reuse it across step/state/grade calls.
 
 ## Setup
 
@@ -137,53 +82,63 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-## Run locally
+## Run
 
-Server:
+Start server:
 
 ```bash
 python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-Baseline inference:
+Run deterministic inference:
 
 ```bash
-INFERENCE_BACKEND=local python inference.py
+INFERENCE_BACKEND=local INFERENCE_SEED=2026 python inference.py
 ```
 
-The local backend is deterministic and does not call any external API. Temporary Gemini validation can use Google AI Studio keys through the OpenAI-compatible Gemini endpoint:
+Run world-modeling demo:
 
 ```bash
-GEMINI_API_KEY=... INFERENCE_BACKEND=gemini MODEL_NAME=gemini-3-flash-preview python inference.py
+python world_modeling_demo.py
 ```
 
-When an OpenAI key is available at the venue, use:
+## Training + Evidence pipeline (environment-grounded)
+
+1) Train policy from environment rollouts:
 
 ```bash
-OPENAI_API_KEY=sk_... INFERENCE_BACKEND=openai MODEL_NAME=gpt-4 python inference.py
+python training/trl_sft_training.py
 ```
 
-By default, `INFERENCE_BACKEND=auto` uses Gemini when `GEMINI_API_KEY` is present, then OpenAI-compatible API mode when `OPENAI_API_KEY` or `MODEL_API_KEY` is present, otherwise it uses the local policy.
+Generates:
+- `artifacts/learned_policy.json`
+- `artifacts/training_curve.csv`
+- `artifacts/training_curve.json`
+- `artifacts/training_curve.svg`
+- `artifacts/trl_sft_training_metrics.json`
 
-Generic OpenAI-compatible providers can be configured with:
+2) Evaluate baseline vs mid vs trained:
 
 ```bash
-API_BASE_URL=https://provider.example/v1 MODEL_API_KEY=... MODEL_NAME=... INFERENCE_BACKEND=api python inference.py
+python training/evaluate_reward_improvement.py
 ```
 
-Default auto mode:
+Generates:
+- `artifacts/reward_progression.csv`
+- `artifacts/reward_progression.json`
+- `artifacts/reward_progression.svg`
 
-```bash
-python inference.py
-```
-
-OpenEnv validation:
+## Validation commands
 
 ```bash
 openenv validate
+python world_modeling_demo.py
+python inference.py
+python training/trl_sft_training.py
+python training/evaluate_reward_improvement.py
 ```
 
-## Submission links (fill with your final public URLs)
+## Submission links
 
 - Hugging Face Space URL: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
 - Live API base URL: `https://samdutta123-scaler-final-openenv.hf.space`
@@ -191,4 +146,4 @@ openenv validate
 - Mini-blog URL: `REPLACE_WITH_FINAL_BLOG_URL`
 - Mini-video URL (<2 min): `REPLACE_WITH_FINAL_VIDEO_URL`
 
-> Do not mark submission as fully ready until the placeholders above are replaced with live public links.
+> Replace placeholders before final submission.

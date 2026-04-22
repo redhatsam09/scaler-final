@@ -1,0 +1,449 @@
+{
+  "baseline": {
+    "task_missing_values": [
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "impute",
+        "parameters": {
+          "method": "mean"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_duplicate_handling": [
+      {
+        "action_type": "deduplicate",
+        "parameters": {
+          "keep": "first"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_complex_validation": [
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_enterprise_orchestration": [
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "delegate",
+        "parameters": {
+          "actor": "support_lead",
+          "objective": "critical ticket triage"
+        }
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ]
+  },
+  "mid": {
+    "task_missing_values": [
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "impute",
+        "parameters": {
+          "method": "mean"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "impute",
+        "parameters": {
+          "method": "forward_fill"
+        }
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_duplicate_handling": [
+      {
+        "action_type": "deduplicate",
+        "parameters": {
+          "keep": "first"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "deduplicate",
+        "parameters": {
+          "keep": "last"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_complex_validation": [
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "deduplicate",
+        "parameters": {
+          "keep": "first"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_enterprise_orchestration": [
+      {
+        "action_type": "resolve_alert",
+        "parameters": {
+          "actor": "finance_bot"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "delegate",
+        "parameters": {
+          "actor": "finance_bot",
+          "objective": "invoice cleanup"
+        }
+      },
+      {
+        "action_type": "resolve_alert",
+        "parameters": {
+          "actor": "finance_bot"
+        }
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ]
+  },
+  "trained": {
+    "task_missing_values": [
+      {
+        "action_type": "deduplicate",
+        "parameters": {
+          "keep": "first"
+        }
+      },
+      {
+        "action_type": "impute",
+        "parameters": {
+          "method": "mean"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "impute",
+        "parameters": {
+          "method": "forward_fill"
+        }
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_duplicate_handling": [
+      {
+        "action_type": "deduplicate",
+        "parameters": {
+          "keep": "first"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_complex_validation": [
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "deduplicate",
+        "parameters": {
+          "keep": "first"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "impute",
+        "parameters": {
+          "method": "forward_fill"
+        }
+      },
+      {
+        "action_type": "validate",
+        "parameters": {}
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ],
+    "task_enterprise_orchestration": [
+      {
+        "action_type": "resolve_alert",
+        "parameters": {
+          "actor": "finance_bot"
+        }
+      },
+      {
+        "action_type": "reconcile_apps",
+        "parameters": {
+          "join_key": "account_id"
+        }
+      },
+      {
+        "action_type": "analyze",
+        "parameters": {}
+      },
+      {
+        "action_type": "delegate",
+        "parameters": {
+          "actor": "finance_bot",
+          "objective": "invoice cleanup"
+        }
+      },
+      {
+        "action_type": "resolve_alert",
+        "parameters": {
+          "actor": "finance_bot"
+        }
+      },
+      {
+        "action_type": "report_findings",
+        "parameters": {
+          "include_summary": true,
+          "include_quality_score": true,
+          "include_recommendations": true
+        }
+      }
+    ]
+  }
+}

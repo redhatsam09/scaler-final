@@ -5,7 +5,12 @@ from typing import Optional
 from openai import OpenAI
 from src.environment import DataCleaningEnv
 from src.models import Action
-from src.graders import MissingValuesGrader, DuplicateHandlingGrader, ComplexValidationGrader
+from src.graders import (
+    MissingValuesGrader,
+    DuplicateHandlingGrader,
+    ComplexValidationGrader,
+    EnterpriseOrchestrationGrader,
+)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("MODEL_API_KEY")
@@ -22,7 +27,7 @@ MIN_TASK_SCORE = 0.01
 MAX_TASK_SCORE = 0.99
 INFERENCE_SEED = int(os.getenv("INFERENCE_SEED", "2026"))
 
-SYSTEM_PROMPT = """You are an expert data analyst. Your task is to clean and validate datasets by identifying and resolving data quality issues.
+SYSTEM_PROMPT = """You are an expert enterprise operations analyst. Your task is to clean and validate cross-app datasets and coordinate multiple actors.
 
 You have access to the following actions:
 - analyze: Examine data structure, types, and quality metrics
@@ -30,6 +35,9 @@ You have access to the following actions:
 - deduplicate: Remove duplicate records
 - validate: Check data against validation rules
 - report_findings: Generate summary of data quality assessment
+- delegate: Assign work to an actor (sales_ops, finance_bot, support_lead, compliance_officer)
+- resolve_alert: Resolve escalations from actors
+- reconcile_apps: Resolve cross-app conflicts across CRM, Billing, and Support
 
 For each action, provide:
 1. action_type: One of the actions above
@@ -133,7 +141,39 @@ def local_policy_action(task_id: str, observation, step: int) -> Action:
             reasoning="Local deterministic policy: profile columns with active quality issues.",
         )
 
-    if task_id == "task_duplicate_handling":
+    if task_id == "task_enterprise_orchestration":
+        if step == 2:
+            return Action(
+                action_type="delegate",
+                target_columns=columns[:3],
+                parameters={"actor": "finance_bot", "objective": "resolve duplicate invoice clusters"},
+                reasoning="Delegate invoice consistency checks to finance bot.",
+            )
+        if step == 3:
+            return Action(
+                action_type="reconcile_apps",
+                target_columns=columns,
+                parameters={"join_key": "account_id"},
+                reasoning="Reconcile CRM/Billing/Support mismatches on account_id.",
+            )
+        if step == 4:
+            return Action(
+                action_type="resolve_alert",
+                target_columns=columns[:2],
+                parameters={"actor": "finance_bot"},
+                reasoning="Close finance escalation after reconciliation.",
+            )
+        if step == 5:
+            return Action(
+                action_type="validate",
+                target_columns=columns,
+                parameters={
+                    "compliance_tier_type": "categorical_nonempty",
+                    "ticket_priority_type": "categorical_nonempty",
+                },
+                reasoning="Validate new compliance requirements after schema drift.",
+            )
+    elif task_id == "task_duplicate_handling":
         if step == 2:
             subset = [columns[0]] if columns else None
             return Action(
@@ -257,7 +297,7 @@ Based on this state, what data cleaning action should you take next?
         if done:
             break
 
-        if action.action_type == "report_findings" and step >= 4:
+        if action.action_type == "report_findings" and step >= 6:
             break
     
     episode_state = env.current_episode
@@ -273,6 +313,7 @@ def main():
         ("task_missing_values", MissingValuesGrader),
         ("task_duplicate_handling", DuplicateHandlingGrader),
         ("task_complex_validation", ComplexValidationGrader),
+        ("task_enterprise_orchestration", EnterpriseOrchestrationGrader),
     ]
     
     scores = {}

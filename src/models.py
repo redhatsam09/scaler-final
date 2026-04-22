@@ -11,11 +11,26 @@ class Observation(BaseModel):
     task_id: str = Field(description="Current task being evaluated")
     step_count: int = Field(description="Current step number in episode")
     episode_progress: str = Field(description="Summary of progress made so far")
+    drift_notice: Optional[str] = Field(
+        default=None,
+        description="Schema/policy drift notice when environment contracts change mid-episode",
+    )
+    actor_messages: List[str] = Field(
+        default_factory=list,
+        description="Recent messages from simulated actors in the environment",
+    )
+    kpi_snapshot: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Current high-level KPI metrics visible to the agent",
+    )
 
 
 class Action(BaseModel):
     action_type: str = Field(
-        description="Type of action: analyze, impute, deduplicate, validate, or report_findings"
+        description=(
+            "Type of action: analyze, impute, deduplicate, validate, report_findings, "
+            "delegate, resolve_alert, or reconcile_apps"
+        )
     )
     target_columns: List[str] = Field(description="Columns to apply action on")
     parameters: Dict[str, Any] = Field(

@@ -7,9 +7,14 @@ from pydantic import BaseModel
 from typing import Dict, Any, Optional
 from src.environment import DataCleaningEnv, DEFAULT_ENV_SEED
 from src.models import Action
-from src.graders import MissingValuesGrader, DuplicateHandlingGrader, ComplexValidationGrader
+from src.graders import (
+    MissingValuesGrader,
+    DuplicateHandlingGrader,
+    ComplexValidationGrader,
+    EnterpriseOrchestrationGrader,
+)
 
-app = FastAPI(title="Data Cleaning Environment")
+app = FastAPI(title="Enterprise Orchestration Environment")
 
 app.add_middleware(
     CORSMiddleware,
@@ -62,9 +67,14 @@ async def health():
 @app.get("/")
 async def root():
     return {
-        "name": "Data Cleaning Environment",
+        "name": "Enterprise Orchestration Environment",
         "version": "1.0.0",
-        "tasks": ["task_missing_values", "task_duplicate_handling", "task_complex_validation"],
+        "tasks": [
+            "task_missing_values",
+            "task_duplicate_handling",
+            "task_complex_validation",
+            "task_enterprise_orchestration",
+        ],
         "session_mode": "multi-session",
     }
 
@@ -168,6 +178,9 @@ async def reset(request: Request):
                 "task_id": observation.task_id,
                 "step_count": observation.step_count,
                 "episode_progress": observation.episode_progress,
+                "drift_notice": observation.drift_notice,
+                "actor_messages": observation.actor_messages,
+                "kpi_snapshot": observation.kpi_snapshot,
             },
             task_id=observation.task_id,
             step=observation.step_count,
@@ -199,6 +212,9 @@ async def step(request: StepRequest):
                 "task_id": observation.task_id,
                 "step_count": observation.step_count,
                 "episode_progress": observation.episode_progress,
+                "drift_notice": observation.drift_notice,
+                "actor_messages": observation.actor_messages,
+                "kpi_snapshot": observation.kpi_snapshot,
             },
             reward=reward.value,
             done=done,
@@ -230,6 +246,7 @@ async def grade(task_id: str = "task_missing_values", session_id: Optional[str] 
             "task_missing_values": MissingValuesGrader,
             "task_duplicate_handling": DuplicateHandlingGrader,
             "task_complex_validation": ComplexValidationGrader,
+            "task_enterprise_orchestration": EnterpriseOrchestrationGrader,
         }
 
         grader_class = graders.get(task_id)
