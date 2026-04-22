@@ -38,3 +38,4 @@ htmlcov/
 .env.local
 .ipynb_checkpoints/
 artifacts/trl_sft_checkpoint/
+.codex
