@@ -43,13 +43,30 @@ class Observation(BaseModel):
         default_factory=dict,
         description="Economic trade-off context such as cost used, budget, and cost efficiency",
     )
+    natural_language_observation: str = Field(
+        default="",
+        description=(
+            "A natural-language paragraph summarizing the current state. "
+            "Forces LLM agents to parse and reason about unstructured text, "
+            "testing genuine world-modeling capability."
+        ),
+    )
+    available_actions: List[str] = Field(
+        default_factory=list,
+        description="Actions available to the agent at this step given current context",
+    )
+    urgency_signals: List[str] = Field(
+        default_factory=list,
+        description="Urgent issues requiring immediate attention (SLA breaches, budget warnings, etc.)",
+    )
 
 
 class Action(BaseModel):
     action_type: str = Field(
         description=(
             "Type of action: analyze, impute, deduplicate, validate, report_findings, "
-            "delegate, resolve_alert, reconcile_apps, or oversight_review"
+            "delegate, resolve_alert, reconcile_apps, oversight_review, "
+            "inspect_actor, audit_records, or request_policy_clarification"
         )
     )
     target_columns: List[str] = Field(description="Columns to apply action on")

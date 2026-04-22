@@ -4,201 +4,202 @@
   "episodes_per_task_baseline": 6,
   "episodes_per_task_eval": 10,
   "iterations": 60,
-  "accepted_updates": 15,
-  "baseline_average_score": 0.449767,
-  "trained_average_score": 0.744862,
-  "improvement": 0.295096,
-  "baseline_std": 0.2324,
-  "trained_std": 0.165102,
+  "accepted_updates": 13,
+  "baseline_average_score": 0.423694,
+  "trained_average_score": 0.624493,
+  "improvement": 0.200799,
+  "baseline_std": 0.237398,
+  "trained_std": 0.22767,
   "task_scores_baseline": {
-    "task_missing_values": 0.689173,
-    "task_duplicate_handling": 0.084351,
-    "task_complex_validation": 0.597769,
-    "task_enterprise_orchestration": 0.427774
+    "task_missing_values": 0.629173,
+    "task_duplicate_handling": 0.024351,
+    "task_complex_validation": 0.537931,
+    "task_enterprise_orchestration": 0.503321
   },
   "task_scores_trained": {
-    "task_missing_values": 0.823857,
-    "task_duplicate_handling": 0.504152,
-    "task_complex_validation": 0.944228,
-    "task_enterprise_orchestration": 0.707212
+    "task_missing_values": 0.803857,
+    "task_duplicate_handling": 0.244152,
+    "task_complex_validation": 0.774979,
+    "task_enterprise_orchestration": 0.674986
   },
   "task_improvement": {
-    "task_missing_values": 0.134683,
-    "task_duplicate_handling": 0.419801,
-    "task_complex_validation": 0.346459,
-    "task_enterprise_orchestration": 0.279439
+    "task_missing_values": 0.174683,
+    "task_duplicate_handling": 0.219801,
+    "task_complex_validation": 0.237048,
+    "task_enterprise_orchestration": 0.171665
   },
   "action_distribution": {
-    "analyze": 4,
+    "analyze": 3,
     "impute": 3,
-    "validate": 5,
-    "report_findings": 4,
+    "validate": 4,
+    "report_findings": 5,
+    "reconcile_apps": 4,
     "deduplicate": 2,
-    "reconcile_apps": 3,
+    "inspect_actor": 1,
     "oversight_review": 1,
-    "delegate": 1,
-    "resolve_alert": 1
+    "delegate": 1
   },
   "artifacts": {
-    "policy": "artifacts/learned_policy.json",
-    "policy_snapshots": "artifacts/policy_snapshots.json",
-    "training_curve_json": "artifacts/training_curve.json",
-    "training_curve_csv": "artifacts/training_curve.csv",
-    "training_curve_svg": "artifacts/training_curve.svg"
+    "policy": "artifacts\\learned_policy.json",
+    "policy_snapshots": "artifacts\\policy_snapshots.json",
+    "training_curve_json": "artifacts\\training_curve.json",
+    "training_curve_csv": "artifacts\\training_curve.csv",
+    "training_curve_svg": "artifacts\\training_curve.svg"
   },
   "evaluation_rows": [
     {
       "stage": "baseline",
-      "average_score": 0.43647602983145284,
-      "std_score": 0.00473447543715649,
+      "average_score": 0.4175982455086385,
+      "std_score": 0.005056796298609238,
       "seed_group_scores": [
         {
           "base_seed": 6100,
-          "average_score": 0.434481,
-          "std_score": 0.100778
+          "average_score": 0.414923,
+          "std_score": 0.131353
         },
         {
           "base_seed": 6200,
-          "average_score": 0.438034,
-          "std_score": 0.101991
+          "average_score": 0.418907,
+          "std_score": 0.135555
         },
         {
           "base_seed": 6300,
-          "average_score": 0.437573,
-          "std_score": 0.101603
+          "average_score": 0.420906,
+          "std_score": 0.137602
         },
         {
           "base_seed": 6400,
-          "average_score": 0.443365,
-          "std_score": 0.104712
+          "average_score": 0.423913,
+          "std_score": 0.140877
         },
         {
           "base_seed": 6500,
-          "average_score": 0.428926,
-          "std_score": 0.09739
+          "average_score": 0.409342,
+          "std_score": 0.124139
         }
       ],
       "task_scores": {
-        "task_missing_values": 0.48982203976000005,
-        "task_duplicate_handling": 0.26415005620000004,
-        "task_complex_validation": 0.48945901435428574,
-        "task_enterprise_orchestration": 0.5024730090115255
+        "task_missing_values": 0.46982203976000003,
+        "task_duplicate_handling": 0.20415005620000004,
+        "task_complex_validation": 0.42944902731428575,
+        "task_enterprise_orchestration": 0.5669718587602681
       }
     },
     {
       "stage": "mid",
-      "average_score": 0.6306615897190678,
-      "std_score": 0.005774595614691811,
+      "average_score": 0.5966935938762532,
+      "std_score": 0.00590357779937305,
       "seed_group_scores": [
         {
           "base_seed": 6100,
-          "average_score": 0.63373,
-          "std_score": 0.218373
+          "average_score": 0.599063,
+          "std_score": 0.214045
         },
         {
           "base_seed": 6200,
-          "average_score": 0.630406,
-          "std_score": 0.21845
+          "average_score": 0.596194,
+          "std_score": 0.213843
         },
         {
           "base_seed": 6300,
-          "average_score": 0.63139,
-          "std_score": 0.219118
+          "average_score": 0.599647,
+          "std_score": 0.214763
         },
         {
           "base_seed": 6400,
-          "average_score": 0.620218,
-          "std_score": 0.210587
+          "average_score": 0.585678,
+          "std_score": 0.204882
         },
         {
           "base_seed": 6500,
-          "average_score": 0.637564,
-          "std_score": 0.219744
+          "average_score": 0.602885,
+          "std_score": 0.21595
         }
       ],
       "task_scores": {
-        "task_missing_values": 0.8155848272698345,
-        "task_duplicate_handling": 0.26415005620000004,
-        "task_complex_validation": 0.7368807153549105,
-        "task_enterprise_orchestration": 0.7060307600515255
+        "task_missing_values": 0.7955848272698345,
+        "task_duplicate_handling": 0.24415005620000002,
+        "task_complex_validation": 0.6763956220749104,
+        "task_enterprise_orchestration": 0.6706438699602681
       }
     },
     {
       "stage": "trained",
-      "average_score": 0.7422386616005278,
-      "std_score": 0.006115006442545884,
+      "average_score": 0.6211924524948563,
+      "std_score": 0.00623678410232602,
       "seed_group_scores": [
         {
           "base_seed": 6100,
-          "average_score": 0.745065,
-          "std_score": 0.16189
+          "average_score": 0.623319,
+          "std_score": 0.226267
         },
         {
           "base_seed": 6200,
-          "average_score": 0.741011,
-          "std_score": 0.164716
+          "average_score": 0.619718,
+          "std_score": 0.226342
         },
         {
           "base_seed": 6300,
-          "average_score": 0.743072,
-          "std_score": 0.166833
+          "average_score": 0.624261,
+          "std_score": 0.22775
         },
         {
           "base_seed": 6400,
-          "average_score": 0.7317,
-          "std_score": 0.16139
+          "average_score": 0.610074,
+          "std_score": 0.219267
         },
         {
           "base_seed": 6500,
-          "average_score": 0.750345,
-          "std_score": 0.164275
+          "average_score": 0.628591,
+          "std_score": 0.229046
         }
       ],
       "task_scores": {
-        "task_missing_values": 0.8155848272698345,
-        "task_duplicate_handling": 0.5041500562000001,
-        "task_complex_validation": 0.9436855705607512,
-        "task_enterprise_orchestration": 0.7055341923715254
+        "task_missing_values": 0.7955848272698345,
+        "task_duplicate_handling": 0.24415005620000002,
+        "task_complex_validation": 0.7743910565493224,
+        "task_enterprise_orchestration": 0.6706438699602681
       }
     }
   ],
   "reward_progression_artifacts": {
-    "csv": "artifacts/reward_progression.csv",
-    "json": "artifacts/reward_progression.json",
-    "svg": "artifacts/reward_progression.svg",
-    "ablation_no_actor_actions": "artifacts/ablation_no_actor_actions.json",
-    "heldout_drift_scenario": "artifacts/heldout_drift_scenario.json",
-    "world_model_flow": "artifacts/world_model_flow.svg",
-    "failure_success_trajectory": "artifacts/failure_success_trajectory.svg"
+    "csv": "artifacts\\reward_progression.csv",
+    "json": "artifacts\\reward_progression.json",
+    "svg": "artifacts\\reward_progression.svg",
+    "ablation_no_actor_actions": "artifacts\\ablation_no_actor_actions.json",
+    "heldout_drift_scenario": "artifacts\\heldout_drift_scenario.json",
+    "world_model_flow": "artifacts\\world_model_flow.svg",
+    "failure_success_trajectory": "artifacts\\failure_success_trajectory.svg"
   },
   "ablation_no_actor_actions": {
     "description": "Enterprise task ablation comparing full policy against the same action program with actor-facing actions removed.",
     "actor_actions_removed": [
       "delegate",
+      "inspect_actor",
       "oversight_review",
       "resolve_alert"
     ],
     "full_policy": {
-      "average_score": 0.701052,
-      "std_score": 0.051774,
+      "average_score": 0.667976,
+      "std_score": 0.058069,
       "task_scores": {
-        "task_enterprise_orchestration": 0.701052
+        "task_enterprise_orchestration": 0.667976
       }
     },
     "no_actor_actions": {
-      "average_score": 0.403614,
-      "std_score": 0.046384,
+      "average_score": 0.284008,
+      "std_score": 0.046308,
       "task_scores": {
-        "task_enterprise_orchestration": 0.403614
+        "task_enterprise_orchestration": 0.284008
       }
     },
-    "delta_full_minus_ablation": 0.297437
+    "delta_full_minus_ablation": 0.383968
   },
   "heldout_drift_scenario": {
-    "average_score": 0.704873,
-    "std_score": 0.055811,
+    "average_score": 0.691048,
+    "std_score": 0.055686,
     "task_scores": {
-      "task_enterprise_orchestration": 0.704873
+      "task_enterprise_orchestration": 0.691048
     }
   }
 }

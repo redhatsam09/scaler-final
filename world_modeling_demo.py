@@ -38,7 +38,7 @@ def run_demo() -> None:
         print(f"TASK {task_id}")
         print(f"reset: {_state_line(env.state())}")
 
-        for step in range(1, 8):
+        for step in range(1, 11):
             before = env.state()
             action = local_policy_action(task_id, observation, step)
             observation, reward, done, _info = env.step(action)

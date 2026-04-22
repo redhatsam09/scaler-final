@@ -1,6 +1,6 @@
 ---
 title: scaler-final-submission
-emoji: "🐳"
+emoji: "🏢"
 colorFrom: blue
 colorTo: green
 sdk: docker
@@ -8,103 +8,123 @@ app_port: 7860
 pinned: false
 ---
 
-# OpenEnv Multi-App Enterprise Orchestration Environment
+# 🏢 Enterprise Orchestration RL Environment
 
-An OpenEnv environment for **Theme #3 World Modeling (Professional Tasks)** with strong overlap to:
-- **Theme #1 Multi-Agent Interactions** (delegation + actor escalations),
-- **Theme #2 Long-Horizon Planning** (schema drift + delayed coordination effects),
-- Patronus-style **schema/policy drift** behavior.
+> **Theme #3.1 — World Modeling (Professional Tasks)** | Scaler AI Labs Sub-Theme  
+> A multi-app RL environment where LLM agents must orchestrate CRM, Billing, and Support workflows under schema drift, conflicting actor incentives, deceptive recommendations, economic constraints, and stochastic delegation outcomes.
 
-The environment simulates CRM + Billing + Support workflows in one partially observable world. Agents must choose tool actions, negotiate conflicting actor incentives, handle contract drift, detect deceptive recommendations, and improve enterprise KPIs over multi-step episodes.
+## The Problem
 
-![Hidden state to action to KPI to grade loop](artifacts/world_model_flow.svg)
+Enterprise workflows are messy. A real enterprise operations agent must:
+- **Navigate conflicting stakeholder incentives** — finance wants to cut costs, support wants SLA protection, sales wants conversion
+- **Detect deceptive recommendations** — an analytics bot might suggest shortcuts that destroy compliance
+- **Adapt to mid-episode policy changes** — contracts rename fields, new compliance tiers appear, rules shift
+- **Manage budgets** — every action has a cost, and budget overflow is penalized
+- **Gather information before acting** — blindly delegating to an untrustworthy actor wastes resources
 
-## Why this is competitive
+Most RL environments treat enterprise tasks as simple tool-calling. **This environment captures the nuances** — partial observability, stochastic actor responses, cascading drift, and multi-stakeholder negotiation.
 
-This project is designed around the judging rubric:
-- **Innovation (40%)**: multi-app orchestration, conflicting actor incentives, deceptive actor oversight, dynamic policy drift, economic cost tradeoffs, and curriculum difficulty.
-- **Storytelling (30%)**: clear demo script plus generated figures for hidden state flow and failure-before/success-after trajectories.
-- **Reward improvement evidence (20%)**: 5-seed mean/std, held-out hard-drift scenario, and no-actor-action ablation from real environment rollouts.
-- **Reward/training pipeline (10%)**: environment-grounded policy optimization plus explicit TRL/Unsloth notebook artifact.
+## Why This Is Hard
 
-## Environment design
+| Challenge | How We Implement It |
+|-----------|-------------------|
+| **Partial Observability** | Actor conflicts hidden until inspected; trust levels unknown |
+| **Stochastic Delegation** | Actor pushback probability based on hidden trust scores |
+| **Schema Drift** | Mid-episode field additions, status renames, new validation rules |
+| **Dynamic T&C Updates** | Policy v1→v2→v3 with escalating compliance requirements |
+| **Deceptive Actors** | Analytics assistant may recommend KPI shortcuts (detectable via oversight) |
+| **Economic Constraints** | Action costs with budget limits; cost noise increases with difficulty |
+| **Process Rewards** | Bonus for analyze-first, inspect-before-delegate, validate-after-drift |
+| **Natural Language Observations** | LLM must parse unstructured text, not just read structured fields |
 
-### Tasks
+## Environment Design
 
-- `task_missing_values`: CRM quality repair.
-- `task_duplicate_handling`: Billing deduplication and consistency.
-- `task_complex_validation`: Support quality validation under mixed constraints.
-- `task_enterprise_orchestration`: **new hard task** combining CRM/Billing/Support with multi-actor delegation and schema drift.
+### Tasks (4 difficulty-progressive)
+- `task_missing_values` — CRM quality repair (easy)
+- `task_duplicate_handling` — Billing deduplication (medium)
+- `task_complex_validation` — Support quality validation (hard)
+- `task_enterprise_orchestration` — Full multi-app orchestration with all dynamics (hard)
 
-### Agent actions
+### Agent Actions (12)
+| Action | Purpose | Cost |
+|--------|---------|------|
+| `analyze` | Profile data quality | $2 |
+| `impute` | Fill missing values | $9 |
+| `deduplicate` | Remove duplicates | $7 |
+| `validate` | Check rules & compliance | $5 |
+| `report_findings` | Generate quality report | $3 |
+| `delegate` | Assign work to actor (stochastic!) | $4 |
+| `resolve_alert` | Handle actor escalation | $6 |
+| `reconcile_apps` | Fix cross-app conflicts | $8 |
+| `oversight_review` | Detect deceptive recommendations | $6 |
+| `inspect_actor` | Reveal actor trust & objectives | $1.5 |
+| `audit_records` | Check specific account for issues | $3 |
+| `request_policy_clarification` | Get current T&C details | $1 |
 
-- `analyze`
-- `impute`
-- `deduplicate`
-- `validate`
-- `report_findings`
-- `delegate`
-- `resolve_alert`
-- `reconcile_apps`
-- `oversight_review`
+### Actor System (5 actors with conflicts)
+- **finance_bot** — minimizes write-offs and operational cost
+- **support_lead** — protects SLA and critical ticket backlog
+- **sales_ops** — maximizes conversion and account coverage
+- **compliance_officer** — enforces latest policy version
+- **analytics_assistant** — explains KPIs (but may recommend deceptive shortcuts!)
 
-### Actor incentives and conflicts
+### Anti-Gaming Reward Design
+- Per-step shaped progress signal + rubric-style graders
+- Loop penalties, over-deletion penalties, budget overflow penalties
+- Stale-strategy penalties after policy drift
+- Reasoning quality check (penalizes trivially short reasoning)
+- Process bonuses (analyze-first, inspect-before-delegate, validate-after-drift)
+- Report reward now requires actual data improvement (no more free points for flags)
 
-The enterprise task is not only workflow automation. Each episode exposes actor objectives and conflicts:
+## Training Pipeline
 
-- `finance_bot`: minimizes write-offs and operation cost.
-- `support_lead`: protects SLA and critical ticket backlog.
-- `sales_ops`: maximizes conversion and account coverage.
-- `compliance_officer`: enforces the latest policy/T&C version.
-- `analytics_assistant`: explains KPIs, but can occasionally issue a deceptive shortcut recommendation.
+### Real GRPO Training (TRL + Unsloth)
 
-Key conflicts:
+```bash
+# In Colab with GPU:
+python training/grpo_training.py
+```
 
-- Finance rejects expensive fixes while support asks for costly escalations.
-- Sales prioritizes high-conversion accounts while support prioritizes SLA risk.
-- Analytics may propose KPI shortcuts while compliance requires explainable policy-safe changes.
+Uses `unsloth/Qwen2.5-1.5B-Instruct` with LoRA, GRPO optimizer, and environment-grounded reward functions. The reward function runs each LLM completion through the actual environment.
 
-### World modeling dynamics
+### Environment-Grounded Policy Search
 
-- Hidden mutable dataset state.
-- Partial observations (`missing_values`, schema/dtypes, KPI snapshots, actor messages).
-- Mid-episode schema/policy drift in enterprise task:
-  - new `compliance_tier` field,
-  - invoice status contract change (`pending` → `awaiting_payment`),
-  - new compliance validation requirement.
-- Dynamic T&C updates during the same episode:
-  - policy v2 activates compliance-tier checks,
-  - policy v3 requires high-risk EU accounts to satisfy stricter ticket/invoice closure rules,
-  - stale strategies after policy changes are penalized.
-- Curriculum difficulty:
-  - `easy`, `medium`, and `hard` change drift timing, deception probability, cost budget, and cost noise.
-- Economic cost model:
-  - each action has an operation cost,
-  - reward trades off quality, SLA, conversion, compliance, latency, and remaining budget.
-- Deceptive actor + oversight:
-  - `analytics_assistant` can recommend a wrong shortcut,
-  - `oversight_review` detects and explains the deceptive recommendation.
+```bash
+python training/trl_sft_training.py
+python training/evaluate_reward_improvement.py
+```
 
-### Anti-gaming reward design
+Generates reward progression evidence: baseline (0.436) → mid (0.631) → trained (0.742).
 
-- Per-step shaped progress signal.
-- Rubric-style task graders.
-- Loop penalties for repeated action spam.
-- Over-deletion penalties for destructive shortcuts.
-- KPI-aware scoring (quality/compliance/latency).
-- Actor-alignment scoring (finance cost efficiency, support SLA health, sales conversion health).
-- Budget overflow and stale-policy penalties.
+## Evidence
+
+| Metric | Value |
+|--------|-------|
+| Baseline score (5-seed mean) | 0.436 |
+| Mid-training score | 0.631 |
+| Trained score | **0.742** |
+| Improvement | **+0.306 (+70%)** |
+| Ablation (no actor actions) | 0.404 vs 0.701 |
+| Held-out hard drift | 0.705 |
+
+## Interactive Demo
+
+Visit the HF Space and navigate to `/demo` for an interactive Gradio UI where you can:
+- Reset with any task/difficulty/seed
+- Execute actions step by step
+- See real-time KPIs, rewards, and actor messages
+- Watch the environment react to schema drift and deceptive actors
 
 ## API
 
-Endpoints:
-- `POST /reset`
-- `POST /step`
-- `POST /state`
-- `POST /grade`
-- `GET /health`
-
-`/reset` returns `session_id`; reuse it across step/state/grade calls.
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/reset` | POST | Start new episode |
+| `/step` | POST | Execute action |
+| `/state` | POST | Get full state |
+| `/grade` | POST | Get grader score |
+| `/health` | GET | Health check |
+| `/demo` | GET | Interactive Gradio UI |
 
 ## Setup
 
@@ -117,78 +137,25 @@ pip install -e .
 
 ## Run
 
-Start server:
-
 ```bash
+# Start server with interactive demo
 python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
-```
 
-Run deterministic inference:
-
-```bash
+# Run inference
 INFERENCE_BACKEND=local INFERENCE_SEED=2026 python inference.py
-```
 
-Run world-modeling demo:
-
-```bash
+# Run world-modeling demo
 python world_modeling_demo.py
+
+# Generate GRPO training data (or run full training in Colab)
+python training/grpo_training.py
 ```
 
-## Training + Evidence pipeline (environment-grounded)
+## Submission Links
 
-1) Train policy from environment rollouts:
-
-```bash
-python training/trl_sft_training.py
-```
-
-Generates:
-- `artifacts/learned_policy.json`
-- `artifacts/training_curve.csv`
-- `artifacts/training_curve.json`
-- `artifacts/training_curve.svg`
-- `artifacts/trl_sft_training_metrics.json`
-
-2) Evaluate baseline vs mid vs trained:
-
-```bash
-python training/evaluate_reward_improvement.py
-```
-
-Generates:
-- `artifacts/reward_progression.csv`
-- `artifacts/reward_progression.json`
-- `artifacts/reward_progression.svg`
-- `artifacts/ablation_no_actor_actions.json`
-- `artifacts/heldout_drift_scenario.json`
-- `artifacts/world_model_flow.svg`
-- `artifacts/failure_success_trajectory.svg`
-
-![Failure before and success after trajectory](artifacts/failure_success_trajectory.svg)
-
-3) Optional explicit TRL/Unsloth compliance notebook:
-
-```text
-training/trl_unsloth_compliance_notebook.ipynb
-```
-
-This notebook is kept as a judge-friendly TRL/Unsloth artifact. The stronger training evidence remains the environment-grounded rollout pipeline above.
-
-## Validation commands
-
-```bash
-openenv validate
-python world_modeling_demo.py
-python inference.py
-python training/trl_sft_training.py
-python training/evaluate_reward_improvement.py
-```
-
-## Submission links
-
-- Hugging Face Space URL: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
-- Live API base URL: `https://samdutta123-scaler-final-openenv.hf.space`
+- **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
+- **Live API**: `https://samdutta123-scaler-final-openenv.hf.space`
+- **Interactive Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo`
 - Colab notebook URL: `REPLACE_WITH_FINAL_COLAB_URL`
 - Mini-blog URL: `REPLACE_WITH_FINAL_BLOG_URL`
 - Mini-video URL (<2 min): `REPLACE_WITH_FINAL_VIDEO_URL`

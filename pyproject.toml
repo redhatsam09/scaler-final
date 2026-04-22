@@ -3,10 +3,10 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "data-cleaning-env"
-version = "1.0.0"
-description = "Multi-app enterprise orchestration environment for training LLM agents"
-authors = [{name = "OpenEnv Community"}]
+name = "enterprise-orchestration-env"
+version = "2.0.0"
+description = "Multi-app enterprise orchestration RL environment with schema drift, actor conflicts, deceptive oversight, and GRPO training for LLM agents"
+authors = [{name = "Team Scaler Final"}]
 requires-python = ">=3.10"
 dependencies = [
     "fastapi==0.115.12",
@@ -17,6 +17,8 @@ dependencies = [
     "numpy==2.2.4",
     "python-multipart==0.0.20",
     "openenv-core==0.2.3",
+    "gradio>=5.0.0",
+    "matplotlib>=3.9.0",
 ]
 
 [project.scripts]

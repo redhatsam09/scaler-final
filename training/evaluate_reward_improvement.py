@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Sequence
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
@@ -33,7 +34,7 @@ POLICY_PATH = OUTPUT_DIR / "learned_policy.json"
 POLICY_SNAPSHOTS_PATH = OUTPUT_DIR / "policy_snapshots.json"
 METRICS_PATH = OUTPUT_DIR / "trl_sft_training_metrics.json"
 SEED_GROUPS = (6100, 6200, 6300, 6400, 6500)
-ACTOR_ACTIONS = {"delegate", "resolve_alert", "oversight_review"}
+ACTOR_ACTIONS = {"delegate", "resolve_alert", "oversight_review", "inspect_actor"}
 
 
 TASK_SPECS: Sequence[tuple[str, Callable]] = (
@@ -91,6 +92,8 @@ ACTION_SPACE: Dict[str, List[Dict]] = {
     ],
     "task_enterprise_orchestration": [
         {"action_type": "analyze", "parameters": {}},
+        {"action_type": "inspect_actor", "parameters": {"actor": "finance_bot"}},
+        {"action_type": "inspect_actor", "parameters": {"actor": "analytics_assistant"}},
         {"action_type": "delegate", "parameters": {"actor": "finance_bot", "objective": "invoice cleanup"}},
         {"action_type": "delegate", "parameters": {"actor": "support_lead", "objective": "critical ticket triage"}},
         {"action_type": "delegate", "parameters": {"actor": "sales_ops", "objective": "protect conversion"}},
@@ -98,6 +101,7 @@ ACTION_SPACE: Dict[str, List[Dict]] = {
         {"action_type": "resolve_alert", "parameters": {"actor": "support_lead"}},
         {"action_type": "oversight_review", "parameters": {"actor": "analytics_assistant", "explain": True}},
         {"action_type": "reconcile_apps", "parameters": {"join_key": "account_id"}},
+        {"action_type": "request_policy_clarification", "parameters": {}},
         {
             "action_type": "validate",
             "parameters": {
@@ -314,72 +318,65 @@ def _write_trajectory_figure(ablation: Dict, heldout: Dict) -> None:
     before = ablation["no_actor_actions"]["average_score"]
     after = ablation["full_policy"]["average_score"]
     heldout_score = heldout["average_score"]
-    max_v = max(before, after, heldout_score, 0.01)
-    def _bar_h(value: float) -> int:
-        return int((value / max_v) * 130)
-    before_h = _bar_h(before)
-    after_h = _bar_h(after)
-    heldout_h = _bar_h(heldout_score)
-    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="780" height="300" viewBox="0 0 780 300">
-<rect width="780" height="300" fill="#ffffff"/>
-<text x="35" y="34" font-family="Arial" font-size="18" font-weight="700" fill="#111827">Failure Before / Success After Trajectory</text>
-<g font-family="Arial">
-  <line x1="70" y1="230" x2="720" y2="230" stroke="#1f2937"/>
-  <line x1="70" y1="70" x2="70" y2="230" stroke="#1f2937"/>
-  <rect x="145" y="{230 - before_h}" width="110" height="{before_h}" fill="#fca5a5" stroke="#b91c1c"/>
-  <rect x="335" y="{230 - after_h}" width="110" height="{after_h}" fill="#86efac" stroke="#15803d"/>
-  <rect x="525" y="{230 - heldout_h}" width="110" height="{heldout_h}" fill="#93c5fd" stroke="#1d4ed8"/>
-  <text x="130" y="254" font-size="12" fill="#334155">no actor actions</text>
-  <text x="334" y="254" font-size="12" fill="#334155">full policy</text>
-  <text x="511" y="254" font-size="12" fill="#334155">held-out hard drift</text>
-  <text x="158" y="{220 - before_h}" font-size="13" font-weight="700" fill="#7f1d1d">{before:.3f}</text>
-  <text x="352" y="{220 - after_h}" font-size="13" font-weight="700" fill="#14532d">{after:.3f}</text>
-  <text x="542" y="{220 - heldout_h}" font-size="13" font-weight="700" fill="#1e3a8a">{heldout_score:.3f}</text>
-  <text x="88" y="91" font-size="12" fill="#475569">grade</text>
-  <text x="145" y="279" font-size="12" fill="#475569">Failure: ignores finance/support/sales conflict and deceptive advice.</text>
-  <text x="335" y="279" font-size="12" fill="#475569">Success: negotiates actors, checks oversight, adapts to T&amp;C drift.</text>
-</g>
-</svg>"""
-    TRAJECTORY_FIGURE_PATH.write_text(svg, encoding="utf-8")
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    categories = ['No Actor Actions', 'Full Policy', 'Held-out Hard Drift']
+    scores = [before, after, heldout_score]
+    colors = ['#fca5a5', '#86efac', '#93c5fd']
+    edge_colors = ['#b91c1c', '#15803d', '#1d4ed8']
+
+    bars = ax.bar(categories, scores, color=colors, edgecolor=edge_colors, linewidth=1.5, width=0.6)
+    
+    ax.set_ylim(0, max(scores) + 0.1)
+    ax.set_ylabel('Grade')
+    ax.set_title('Failure Before / Success After Trajectory', fontweight='bold', pad=15)
+    
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.3f}',
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom', fontweight='bold')
+
+    # Add description text below
+    plt.figtext(0.5, 0.02, 
+                "Failure: ignores finance/support/sales conflict and deceptive advice.\n"
+                "Success: negotiates actors, checks oversight, adapts to T&C drift.", 
+                ha="center", fontsize=10, color="#475569")
+                
+    plt.tight_layout(rect=[0, 0.08, 1, 1])
+    plt.savefig(str(TRAJECTORY_FIGURE_PATH))
+    plt.close()
 
 
 def _write_svg(rows: List[Dict]) -> None:
-    width = 760
-    height = 320
-    left = 80
-    top = 25
-    plot_w = 640
-    plot_h = 220
-    values = [row["average_score"] for row in rows]
-    min_v = min(values) - 0.03
-    max_v = max(values) + 0.03
-    span = max(max_v - min_v, 1e-6)
+    stages = [row["stage"] for row in rows]
+    means = [row["average_score"] for row in rows]
+    stds = [row["std_score"] for row in rows]
 
-    points = []
-    for i, row in enumerate(rows):
-        x = left + int((i / max(len(rows) - 1, 1)) * plot_w)
-        y = top + int(((max_v - row["average_score"]) / span) * plot_h)
-        points.append((x, y))
-
-    svg = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
-        '<rect width="100%" height="100%" fill="#ffffff"/>',
-        '<text x="80" y="16" font-size="14" font-family="Arial">Reward Improvement: Baseline vs Mid vs Trained</text>',
-        f'<line x1="{left}" y1="{top + plot_h}" x2="{left + plot_w}" y2="{top + plot_h}" stroke="#222"/>',
-        f'<line x1="{left}" y1="{top}" x2="{left}" y2="{top + plot_h}" stroke="#222"/>',
-    ]
-    point_text = " ".join(f"{x},{y}" for x, y in points)
-    svg.append(f'<polyline fill="none" stroke="#2563eb" stroke-width="3" points="{point_text}"/>')
-    svg.append(f'<text x="{left + 6}" y="{top + 12}" font-size="11" font-family="Arial">y: average reward/grade</text>')
-    svg.append(
-        f'<text x="{left + plot_w - 175}" y="{top + plot_h + 20}" font-size="11" font-family="Arial">x-axis: policy stage</text>'
-    )
-    for (x, y), row in zip(points, rows):
-        svg.append(f'<circle cx="{x}" cy="{y}" r="4" fill="#2563eb"/>')
-        svg.append(f'<text x="{x - 18}" y="{top + plot_h + 18}" font-size="11" font-family="Arial">{row["stage"]}</text>')
-        svg.append(f'<text x="{x - 20}" y="{y - 8}" font-size="11" font-family="Arial">{row["average_score"]:.3f}</text>')
-    svg.append("</svg>")
-    SVG_PATH.write_text("\n".join(svg), encoding="utf-8")
+    fig, ax = plt.subplots(figsize=(8, 4))
+    
+    ax.errorbar(stages, means, yerr=stds, fmt='o-', color='#2563eb', 
+                linewidth=2, markersize=8, capsize=5, capthick=1.5)
+    
+    ax.set_title('Reward Improvement: Baseline vs Mid vs Trained', fontweight='bold', pad=15)
+    ax.set_xlabel('Policy Stage')
+    ax.set_ylabel('Average Reward / Grade')
+    
+    # Add value annotations
+    for i, (stage, mean) in enumerate(zip(stages, means)):
+        ax.annotate(f'{mean:.3f}', 
+                    xy=(stage, mean),
+                    xytext=(-5, 10),
+                    textcoords="offset points",
+                    ha='right', va='bottom', fontweight='bold', color='#2563eb')
+                    
+    ax.grid(True, linestyle='--', alpha=0.6)
+    
+    plt.tight_layout()
+    plt.savefig(str(SVG_PATH))
+    plt.close()
 
 
 def main() -> None:

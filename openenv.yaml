@@ -1,7 +1,7 @@
-name: data-cleaning-env
-version: 1.0.0
-description: Multi-app enterprise orchestration environment with schema drift and actor coordination
-author: OpenEnv Community
+name: enterprise-orchestration-env
+version: 2.0.0
+description: Multi-app enterprise orchestration environment with schema drift, actor conflicts, deceptive oversight, economic budgets, and curriculum difficulty for training LLM agents via GRPO
+author: Team Scaler Final
 openenv_version: "1.0"
 
 observation_model: src.models.Observation

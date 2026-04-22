@@ -1,0 +1,18 @@
+{
+  "training_mode": "grpo_training_data_generation",
+  "note": "Run this script in Colab with GPU for actual GRPO training",
+  "trl_required": true,
+  "unsloth_recommended": true,
+  "model_recommended": "unsloth/Qwen2.5-1.5B-Instruct",
+  "num_training_examples": 80,
+  "mean_reward": 1.3345,
+  "max_reward": 2.089,
+  "min_reward": 0.9066,
+  "tasks_covered": [
+    "task_enterprise_orchestration",
+    "task_missing_values",
+    "task_duplicate_handling",
+    "task_complex_validation"
+  ],
+  "dataset_path": "artifacts\\grpo_training_dataset.json"
+}

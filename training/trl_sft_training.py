@@ -79,6 +79,8 @@ ACTION_SPACE: Dict[str, List[Dict]] = {
     ],
     "task_enterprise_orchestration": [
         {"action_type": "analyze", "parameters": {}},
+        {"action_type": "inspect_actor", "parameters": {"actor": "finance_bot"}},
+        {"action_type": "inspect_actor", "parameters": {"actor": "analytics_assistant"}},
         {"action_type": "delegate", "parameters": {"actor": "finance_bot", "objective": "invoice cleanup"}},
         {"action_type": "delegate", "parameters": {"actor": "support_lead", "objective": "critical ticket triage"}},
         {"action_type": "delegate", "parameters": {"actor": "sales_ops", "objective": "protect conversion"}},
@@ -86,6 +88,7 @@ ACTION_SPACE: Dict[str, List[Dict]] = {
         {"action_type": "resolve_alert", "parameters": {"actor": "support_lead"}},
         {"action_type": "oversight_review", "parameters": {"actor": "analytics_assistant", "explain": True}},
         {"action_type": "reconcile_apps", "parameters": {"join_key": "account_id"}},
+        {"action_type": "request_policy_clarification", "parameters": {}},
         {
             "action_type": "validate",
             "parameters": {

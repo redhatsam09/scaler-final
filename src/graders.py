@@ -82,6 +82,29 @@ def _common_penalties(episode_state: EpisodeState) -> float:
     return _loop_penalty(episode_state) + _excessive_deletion_penalty(episode_state) + _economic_penalty(episode_state)
 
 
+def _process_bonus(episode_state: EpisodeState) -> float:
+    bonuses = episode_state.process_bonuses
+    score = 0.0
+    if bonuses.get("analyze_first"):
+        score += 0.04
+    if bonuses.get("post_drift_validate"):
+        score += 0.06
+    if bonuses.get("oversight_before_follow"):
+        score += 0.06
+    if bonuses.get("early_inspection"):
+        score += 0.04
+    return min(0.2, score)
+
+
+def _reasoning_quality_penalty(episode_state: EpisodeState) -> float:
+    penalty = 0.0
+    for action in episode_state.actions_taken:
+        reasoning = action.get("parameters", {}).get("reasoning", "") or ""
+        if isinstance(reasoning, str) and len(reasoning.strip()) < 5:
+            penalty += 0.01
+    return min(0.1, penalty)
+
+
 class MissingValuesGrader:
     @staticmethod
     def grade(episode_state: EpisodeState) -> float:
@@ -105,8 +128,10 @@ class MissingValuesGrader:
             base += 0.15
 
         base += _kpi_component(episode_state) * 0.12
+        base += _process_bonus(episode_state)
         base -= _common_penalties(episode_state)
         base -= _stale_penalty(episode_state)
+        base -= _reasoning_quality_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
 
 
@@ -140,8 +165,10 @@ class DuplicateHandlingGrader:
             base -= 0.12
 
         base += _kpi_component(episode_state) * 0.1
+        base += _process_bonus(episode_state)
         base -= _common_penalties(episode_state)
         base -= _stale_penalty(episode_state)
+        base -= _reasoning_quality_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
 
 
@@ -181,8 +208,10 @@ class ComplexValidationGrader:
         base = missing_gain * 0.25 + dup_gain * 0.2 + diversity_score * 0.2 + strategic_bonus
         base += _kpi_component(episode_state) * 0.12
         base += _actor_alignment_component(episode_state) * 0.08
+        base += _process_bonus(episode_state)
         base -= _common_penalties(episode_state)
         base -= _stale_penalty(episode_state)
+        base -= _reasoning_quality_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
 
 
@@ -247,7 +276,17 @@ class EnterpriseOrchestrationGrader:
         )
         if _has_action(episode_state, "report_findings"):
             base += 0.04
+        if _has_action(episode_state, "inspect_actor"):
+            base += 0.05
+        if len(episode_state.inspected_actors) >= 2:
+            base += 0.04
+        contested = sum(1 for v in episode_state.delegated_work.values() if v == "contested")
+        resolved_contested = sum(1 for v in episode_state.delegated_work.values() if v == "resolved")
+        if contested > 0 and resolved_contested > 0:
+            base += 0.06  # Handled pushback gracefully
+        base += _process_bonus(episode_state)
         base -= _common_penalties(episode_state)
         base -= _stale_penalty(episode_state)
+        base -= _reasoning_quality_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
 

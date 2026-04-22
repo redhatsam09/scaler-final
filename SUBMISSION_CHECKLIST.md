@@ -1,24 +1,28 @@
 SUBMISSION CHECKLIST FOR OPENENV COMPETITION
 =============================================
 
-PROJECT: Multi-App Enterprise Orchestration Environment
-SUBMISSION STATUS: IN PROGRESS (UPGRADED FOR COMPETITIVE SCORING)
+PROJECT: Multi-App Enterprise Orchestration Environment v2.0
+SUBMISSION STATUS: UPGRADED FOR COMPETITIVE SCORING
 
 REQUIRED DELIVERABLES
 =====================
 
 [✓] OpenEnv environment implementation
     - `src/environment.py` + `server/app.py`
-    - `openenv.yaml` with 4 tasks (including orchestration task)
+    - `openenv.yaml` with 4 tasks (including enterprise orchestration)
 
-[✓] Theme alignment and innovation upgrades
-    - Multi-app enterprise orchestration task
-    - Multi-actor delegation, escalation flow, and explicit incentive conflicts
+[✓] Theme alignment and innovation upgrades (v2.0)
+    - Multi-app enterprise orchestration task (CRM + Billing + Support)
+    - Multi-actor delegation with STOCHASTIC pushbacks (trust-based)
     - Deceptive actor recommendation with oversight_review detection
-    - Dynamic mid-episode schema/policy/T&C drift
+    - Dynamic mid-episode schema/policy/T&C drift (v1→v2→v3)
     - Economic cost model and stale-strategy penalty
     - Easy/medium/hard curriculum difficulty
-    - Long-horizon episode budget (60 steps)
+    - 3 new information-gathering actions (inspect_actor, audit_records, request_policy_clarification)
+    - Natural language observations for genuine world modeling
+    - Urgency signals and available action hints
+    - Partially hidden actor conflicts (require inspection to reveal)
+    - Process-level rewards (analyze-first, inspect-before-delegate, validate-after-drift)
 
 [✓] Reward coherence and anti-gaming
     - Rubric-like graders in `src/graders.py`
@@ -26,39 +30,36 @@ REQUIRED DELIVERABLES
     - KPI-aware grading for quality/compliance/latency
     - Actor-alignment scoring for finance/support/sales
     - Budget overflow and stale-policy penalties
+    - Reasoning quality check (penalizes trivially short reasoning)
+    - Report requires actual data improvement (no free points for flags)
+    - Process bonus scoring in all 4 graders
 
-[✓] Environment-grounded training script
-    - `training/trl_sft_training.py`
-    - Produces learned policy + training curve artifacts
+[✓] Real GRPO training script
+    - `training/grpo_training.py` (TRL + Unsloth with env rewards)
+    - Falls back to training data generation when GPU unavailable
+    - Uses unsloth/Qwen2.5-1.5B-Instruct with LoRA
 
-[✓] Reward improvement evidence
-    - `artifacts/reward_progression.csv`
-    - `artifacts/reward_progression.json`
-    - `artifacts/reward_progression.svg`
+[✓] Environment-grounded training evidence
+    - `training/trl_sft_training.py` (policy search baseline)
+    - `training/evaluate_reward_improvement.py`
     - 5-seed mean/std baseline vs mid vs trained
-    - `artifacts/ablation_no_actor_actions.json`
-    - `artifacts/heldout_drift_scenario.json`
+    - Ablation study (with/without actor actions)
+    - Held-out hard drift scenario
 
-[✓] Training evidence artifacts
-    - `artifacts/trl_sft_training_metrics.json`
-    - `artifacts/training_curve.csv`
-    - `artifacts/training_curve.svg`
-    - `training/trl_sft_training.py` for environment-grounded training
-    - `training/trl_unsloth_compliance_notebook.ipynb` for TRL/Unsloth checkbox compliance
+[✓] Interactive Gradio demo
+    - Available at /demo on HF Space
+    - Step-by-step environment interaction for judges
 
 [✓] Storytelling figures
     - `artifacts/world_model_flow.svg`
     - `artifacts/failure_success_trajectory.svg`
-
-[✓] World-modeling demonstration
-    - `python world_modeling_demo.py`
-    - Shows drift notices, actor messages, and causal state transitions
 
 [✓] Session-safe API behavior
     - Session-scoped reset/step/state/grade
 
 [✓] Live Hugging Face Space URL (public)
     - https://huggingface.co/spaces/samdutta123/scaler-final-openenv
+    - Interactive demo: /demo
 
 [ ] Public Colab URL
     - Replace `REPLACE_WITH_FINAL_COLAB_URL` in README
@@ -72,8 +73,9 @@ VALIDATION COMMANDS
 1. openenv validate
 2. python world_modeling_demo.py
 3. python inference.py
-4. python training/trl_sft_training.py
-5. python training/evaluate_reward_improvement.py
+4. python training/grpo_training.py
+5. python training/trl_sft_training.py
+6. python training/evaluate_reward_improvement.py
 
 FINAL GATE BEFORE SUBMISSION
 ============================

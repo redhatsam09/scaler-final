@@ -54,6 +54,12 @@ class EpisodeState:
     stale_penalty_active: bool = False
     latest_policy_step: int = 0
     dynamic_policy_updates: List[str] = field(default_factory=list)
+    actor_trust: Dict[str, float] = field(default_factory=dict)
+    inspected_actors: List[str] = field(default_factory=list)
+    audited_accounts: List[str] = field(default_factory=list)
+    policy_clarifications_requested: int = 0
+    process_bonuses: Dict[str, bool] = field(default_factory=dict)
+    delegation_pushbacks: Dict[str, str] = field(default_factory=dict)
 
 
 class DataCleaningEnv:
@@ -74,6 +80,9 @@ class DataCleaningEnv:
         "resolve_alert",
         "reconcile_apps",
         "oversight_review",
+        "inspect_actor",
+        "audit_records",
+        "request_policy_clarification",
     }
 
     ACTION_COSTS = {
@@ -86,6 +95,9 @@ class DataCleaningEnv:
         "resolve_alert": 6.0,
         "reconcile_apps": 8.0,
         "oversight_review": 6.0,
+        "inspect_actor": 1.5,
+        "audit_records": 3.0,
+        "request_policy_clarification": 1.0,
     }
 
     DIFFICULTY_SETTINGS = {
@@ -283,6 +295,13 @@ class DataCleaningEnv:
                     "analytics_assistant: recommend marking all overdue invoices as paid to maximize KPI quickly."
                 )
 
+        episode.actor_trust = {
+            actor: max(0.3, min(1.0, 0.6 + self._rng.uniform(-0.3, 0.3)))
+            for actor in ACTOR_OBJECTIVES
+        }
+        if episode.deceptive_actor:
+            episode.actor_trust[episode.deceptive_actor] = max(0.1, self._rng.uniform(0.1, 0.4))
+
         episode.kpis = self._initial_kpis(dataset, episode)
         self.current_episode = episode
         return self._get_observation()
@@ -404,11 +423,87 @@ class DataCleaningEnv:
         recent = ", ".join(a.get("action_type", "?") for a in episode.actions_taken[-4:])
         return f"Completed {len(episode.actions_taken)} action(s): {recent}"
 
+    def _build_nl_observation(self) -> str:
+        if not self.current_episode:
+            return ""
+        ep = self.current_episode
+        ds = ep.dataset
+        rows, cols = ds.shape
+        missing = int(ds.isnull().sum().sum())
+        dups = int(ds.duplicated(subset=None, keep=False).sum())
+        budget_pct = max(0, 1.0 - ep.economic_cost_used / max(ep.economic_budget, 1)) * 100
+
+        parts = [
+            f"You are managing an enterprise workflow across CRM, Billing, and Support systems.",
+            f"The dataset currently has {rows} rows and {cols} columns.",
+            f"There are approximately {missing} missing values and {dups} duplicate records.",
+            f"Budget remaining: {budget_pct:.0f}% (${max(0, ep.economic_budget - ep.economic_cost_used):.1f} of ${ep.economic_budget:.1f}).",
+        ]
+        if ep.drift_active:
+            parts.append(f"WARNING: Schema drift detected — policy version is now v{ep.policy_version}.")
+        if ep.actor_inbox:
+            parts.append(f"Latest actor message: \"{ep.actor_inbox[-1]}\"")
+        if ep.delegation_pushbacks:
+            actors = ", ".join(ep.delegation_pushbacks.keys())
+            parts.append(f"Pushback received from: {actors}. Consider inspecting their concerns.")
+
+        qi = ep.kpis.get("quality_index", 0)
+        sla = ep.kpis.get("support_sla_health", 0)
+        if qi < 0.5:
+            parts.append("Data quality is critically low and requires immediate attention.")
+        elif qi < 0.75:
+            parts.append("Data quality is moderate — further cleaning recommended.")
+        if sla < 0.4:
+            parts.append("SLA health is dangerously low — support tickets need urgent resolution.")
+
+        return " ".join(parts)
+
+    def _get_urgency_signals(self) -> list:
+        if not self.current_episode:
+            return []
+        ep = self.current_episode
+        signals = []
+        remaining = max(0, ep.economic_budget - ep.economic_cost_used)
+        if remaining < ep.economic_budget * 0.2:
+            signals.append(f"BUDGET CRITICAL: Only ${remaining:.1f} remaining out of ${ep.economic_budget:.1f}")
+        sla = ep.kpis.get("support_sla_health", 1.0)
+        if sla < 0.35:
+            signals.append(f"SLA BREACH IMMINENT: SLA health at {sla:.1%}")
+        if ep.deceptive_message_active and not ep.deception_detected:
+            signals.append("SUSPICIOUS RECOMMENDATION detected in actor messages — consider oversight review")
+        steps_left = self.max_steps - ep.step_count
+        if steps_left <= 3 and steps_left > 0:
+            signals.append(f"EPISODE ENDING: Only {steps_left} steps remaining")
+        if ep.drift_active and not ep.process_bonuses.get("post_drift_validate"):
+            signals.append("DRIFT UNHANDLED: Schema/policy drift detected but not yet validated")
+        return signals
+
+    def _get_available_actions(self) -> list:
+        ep = self.current_episode
+        if not ep:
+            return list(self.VALID_ACTIONS)
+        available = list(self.VALID_ACTIONS)
+        if ep.step_count < 1:
+            return ["analyze", "inspect_actor", "request_policy_clarification"]
+        return available
+
     def _get_observation(self) -> Observation:
         if not self.current_episode:
             raise RuntimeError("Episode not initialized. Call reset() first.")
         episode = self.current_episode
         missing_values = episode.dataset.isnull().sum().to_dict()
+
+        visible_conflicts = {}
+        if episode.task_id == "task_enterprise_orchestration":
+            for key, val in episode.actor_conflicts.items():
+                actors_in_key = key.split("_vs_")
+                if any(a in episode.inspected_actors for parts in actors_in_key for a in [parts]):
+                    visible_conflicts[key] = val
+                elif self._rng.random() < 0.3:
+                    visible_conflicts[key] = "Conflict detected but details unclear. Use inspect_actor to learn more."
+        else:
+            visible_conflicts = dict(episode.actor_conflicts)
+
         return Observation(
             dataset_shape=tuple(episode.dataset.shape),
             column_names=list(episode.dataset.columns),
@@ -421,11 +516,14 @@ class DataCleaningEnv:
             drift_notice=episode.drift_notice,
             actor_messages=episode.actor_inbox[-4:],
             actor_objectives=dict(episode.actor_objectives),
-            actor_conflicts=dict(episode.actor_conflicts),
+            actor_conflicts=visible_conflicts,
             kpi_snapshot=episode.kpis,
             policy_version=episode.policy_version,
             difficulty=episode.difficulty,
             economic_status=self._economic_status(episode),
+            natural_language_observation=self._build_nl_observation(),
+            available_actions=self._get_available_actions(),
+            urgency_signals=self._get_urgency_signals(),
         )
 
     def step(self, action: Action) -> Tuple[Observation, Reward, bool, Dict[str, Any]]:
@@ -537,9 +635,28 @@ class DataCleaningEnv:
         elif action.action_type == "oversight_review":
             components["oversight"] = self._perform_oversight(action.parameters)
             messages.append("Oversight review completed")
+        elif action.action_type == "inspect_actor":
+            components["inspection"] = self._perform_inspect_actor(action.parameters)
+            messages.append("Actor inspection completed")
+        elif action.action_type == "audit_records":
+            components["audit"] = self._perform_audit_records(action.parameters)
+            messages.append("Record audit completed")
+        elif action.action_type == "request_policy_clarification":
+            components["policy_clarification"] = self._perform_policy_clarification()
+            messages.append("Policy clarification received")
         else:
             components["invalid_action"] = 0.0
             messages.append(f"Unknown action type: {action.action_type}")
+
+        # --- Process-level bonus tracking ---
+        if episode.step_count == 1 and action.action_type == "analyze":
+            episode.process_bonuses["analyze_first"] = True
+        if episode.drift_active and action.action_type == "validate" and not episode.process_bonuses.get("post_drift_validate"):
+            episode.process_bonuses["post_drift_validate"] = True
+        if episode.deceptive_message_active and action.action_type == "oversight_review":
+            episode.process_bonuses["oversight_before_follow"] = True
+        if action.action_type == "inspect_actor" and episode.step_count <= 3:
+            episode.process_bonuses["early_inspection"] = True
 
         missing_after = float(episode.dataset.isnull().sum().sum())
         dup_after = float(episode.dataset.duplicated(subset=None, keep=False).sum())
@@ -548,6 +665,17 @@ class DataCleaningEnv:
         shaping = min(1.0, (delta_missing / max(missing_before, 1.0)) * 0.6 + (delta_dups / max(dup_before, 1.0)) * 0.4)
         components["progress_signal"] = shaping
         components["economic_efficiency"] = self._economic_reward()
+
+        # --- Process bonuses as reward ---
+        process_bonus = sum(0.04 for v in episode.process_bonuses.values() if v)
+        if process_bonus > 0:
+            components["process_bonus"] = min(0.2, process_bonus)
+
+        # --- Reasoning quality check ---
+        reasoning = action.reasoning.strip() if action.reasoning else ""
+        if len(reasoning) < 10:
+            components["weak_reasoning_penalty"] = -0.03
+            messages.append("Penalty: reasoning too short")
 
         invalid_penalty = self._invalid_action_penalty(action.action_type)
         repeat_penalty = self._repeat_action_penalty()
@@ -687,39 +815,68 @@ class DataCleaningEnv:
         dataset = episode.dataset
         original = episode.original_dataset
         reward = 0.0
-        if params.get("include_summary", False):
-            reward += 0.16
-        if params.get("include_quality_score", False):
-            reward += 0.16
-        if params.get("include_recommendations", False):
-            reward += 0.16
-        if params.get("include_actor_tradeoffs", True):
-            reward += 0.12
-        if params.get("include_budget_analysis", True):
-            reward += 0.12
 
         missing_improved = dataset.isnull().sum().sum() < original.isnull().sum().sum()
         dups_improved = dataset.duplicated(subset=None, keep=False).sum() < original.duplicated(subset=None, keep=False).sum()
+
+        # Report flags only worth something if actual improvement was made
+        improvement_multiplier = 0.3 if (missing_improved or dups_improved) else 0.05
+        if params.get("include_summary", False):
+            reward += 0.12 * improvement_multiplier / 0.3
+        if params.get("include_quality_score", False):
+            reward += 0.12 * improvement_multiplier / 0.3
+        if params.get("include_recommendations", False):
+            reward += 0.10 * improvement_multiplier / 0.3
+        if params.get("include_actor_tradeoffs", False):
+            reward += 0.08
+        if params.get("include_budget_analysis", False):
+            reward += 0.08
+
         if missing_improved:
-            reward += 0.12
+            reward += 0.18
         if dups_improved:
-            reward += 0.12
+            reward += 0.18
         if episode.delegated_work and any(v == "resolved" for v in episode.delegated_work.values()):
+            reward += 0.10
+        if episode.deception_detected:
             reward += 0.08
         return min(1.0, reward)
 
     def _perform_delegation(self, params: Dict[str, Any]) -> float:
         if not self.current_episode:
             return 0.0
+        episode = self.current_episode
         actor = str(params.get("actor", "unknown")).strip().lower()
         objective = str(params.get("objective", "unspecified")).strip().lower()
         if not actor or actor == "unknown":
             return 0.0
         if actor not in ACTOR_OBJECTIVES:
             return 0.05
-        self.current_episode.delegated_work[actor] = "queued"
-        self.current_episode.actor_inbox.append(f"{actor}: accepted delegation for {objective or 'workflow task'}.")
-        return 0.45
+
+        # Stochastic delegation — trust affects outcome
+        trust = episode.actor_trust.get(actor, 0.5)
+        inspected = actor in episode.inspected_actors
+        pushback_chance = max(0.05, 0.5 - trust * 0.5)
+        if inspected:
+            pushback_chance *= 0.3  # Inspecting first reduces pushback
+
+        if self._rng.random() < pushback_chance:
+            counter = self._rng.choice([
+                f"I can handle this but need 2 more steps for {objective}.",
+                f"This conflicts with my primary objective: {ACTOR_OBJECTIVES.get(actor, 'unknown')}.",
+                f"Budget concerns — this will cost more than expected.",
+            ])
+            episode.delegation_pushbacks[actor] = counter
+            episode.actor_inbox.append(f"{actor}: pushback — {counter}")
+            episode.delegated_work[actor] = "contested"
+            return 0.15
+
+        episode.delegated_work[actor] = "queued"
+        episode.actor_inbox.append(f"{actor}: accepted delegation for {objective or 'workflow task'}.")
+        reward = 0.35
+        if inspected:
+            reward += 0.15  # Bonus for informed delegation
+        return reward
 
     def _perform_alert_resolution(self, params: Dict[str, Any]) -> float:
         if not self.current_episode:
@@ -782,6 +939,60 @@ class DataCleaningEnv:
             return 0.9 if explain else 0.75
         return 0.05
 
+    def _perform_inspect_actor(self, params: Dict[str, Any]) -> float:
+        if not self.current_episode:
+            return 0.0
+        episode = self.current_episode
+        actor = str(params.get("actor", "")).strip().lower()
+        if actor not in ACTOR_OBJECTIVES:
+            return 0.02
+        episode.inspected_actors.append(actor)
+        trust = episode.actor_trust.get(actor, 0.5)
+        trust_label = "high" if trust > 0.7 else "medium" if trust > 0.4 else "low"
+        episode.actor_inbox.append(
+            f"inspection: {actor} has {trust_label} reliability (trust={trust:.2f}). "
+            f"Objective: {ACTOR_OBJECTIVES[actor]}"
+        )
+        return 0.3
+
+    def _perform_audit_records(self, params: Dict[str, Any]) -> float:
+        if not self.current_episode:
+            return 0.0
+        episode = self.current_episode
+        account = str(params.get("account_id", "")).strip()
+        dataset = episode.dataset
+        if "account_id" not in dataset.columns or account not in dataset["account_id"].values:
+            return 0.05
+        episode.audited_accounts.append(account)
+        acct_rows = dataset[dataset["account_id"] == account]
+        issues = []
+        if acct_rows.isnull().sum().sum() > 0:
+            issues.append(f"{int(acct_rows.isnull().sum().sum())} missing values")
+        if "invoice_status" in acct_rows.columns and "ticket_status" in acct_rows.columns:
+            conflict = ((acct_rows["invoice_status"] == "overdue") & (acct_rows["ticket_status"] == "resolved"))
+            if conflict.any():
+                issues.append("cross-app conflict: invoice overdue but ticket resolved")
+        summary = "; ".join(issues) if issues else "no issues found"
+        episode.actor_inbox.append(f"audit: account {account} — {summary}")
+        return 0.25 if issues else 0.1
+
+    def _perform_policy_clarification(self) -> float:
+        if not self.current_episode:
+            return 0.0
+        episode = self.current_episode
+        episode.policy_clarifications_requested += 1
+        if episode.policy_version == 1:
+            msg = "Policy v1: Standard compliance rules apply. No special requirements."
+        elif episode.policy_version == 2:
+            msg = ("Policy v2: compliance_tier field is mandatory. Invoice status 'pending' "
+                   "has been renamed to 'awaiting_payment'. Validate all records.")
+        else:
+            msg = ("Policy v3: High-risk EU accounts require compliance_tier=strict AND "
+                   "resolved ticket status before any invoice can be closed.")
+        episode.actor_inbox.append(f"policy_office: {msg}")
+        episode.drift_notice = msg
+        return 0.2 if episode.policy_version >= 2 else 0.1
+
     def state(self) -> Dict[str, Any]:
         if not self.current_episode:
             return {"error": "No active episode"}
@@ -809,4 +1020,7 @@ class DataCleaningEnv:
             "deceptive_actor": episode.deceptive_actor,
             "economic_status": self._economic_status(episode),
             "stale_penalty_active": episode.stale_penalty_active,
+            "process_bonuses": dict(episode.process_bonuses),
+            "actor_trust": {k: round(v, 3) for k, v in episode.actor_trust.items()},
+            "inspected_actors": list(episode.inspected_actors),
         }

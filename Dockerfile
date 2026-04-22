@@ -12,6 +12,7 @@ ENV API_BASE_URL=https://api.openai.com/v1
 ENV GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 ENV MODEL_NAME=gemini-3-flash-preview
 ENV INFERENCE_BACKEND=gemini
+ENV GRADIO_SERVER_NAME=0.0.0.0
 
 EXPOSE 7860
 

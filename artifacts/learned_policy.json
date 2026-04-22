@@ -37,26 +37,30 @@
   ],
   "task_duplicate_handling": [
     {
+      "action_type": "report_findings",
+      "parameters": {
+        "include_summary": true,
+        "include_quality_score": true,
+        "include_recommendations": true
+      }
+    },
+    {
+      "action_type": "reconcile_apps",
+      "parameters": {
+        "join_key": "account_id"
+      }
+    },
+    {
+      "action_type": "reconcile_apps",
+      "parameters": {
+        "join_key": "account_id"
+      }
+    },
+    {
       "action_type": "deduplicate",
       "parameters": {
-        "keep": "first"
+        "keep": "last"
       }
-    },
-    {
-      "action_type": "reconcile_apps",
-      "parameters": {
-        "join_key": "account_id"
-      }
-    },
-    {
-      "action_type": "reconcile_apps",
-      "parameters": {
-        "join_key": "account_id"
-      }
-    },
-    {
-      "action_type": "analyze",
-      "parameters": {}
     },
     {
       "action_type": "validate",
@@ -81,14 +85,14 @@
       }
     },
     {
-      "action_type": "analyze",
-      "parameters": {}
-    },
-    {
       "action_type": "deduplicate",
       "parameters": {
         "keep": "first"
       }
+    },
+    {
+      "action_type": "validate",
+      "parameters": {}
     },
     {
       "action_type": "impute",
@@ -113,6 +117,22 @@
   ],
   "task_enterprise_orchestration": [
     {
+      "action_type": "analyze",
+      "parameters": {}
+    },
+    {
+      "action_type": "reconcile_apps",
+      "parameters": {
+        "join_key": "account_id"
+      }
+    },
+    {
+      "action_type": "inspect_actor",
+      "parameters": {
+        "actor": "finance_bot"
+      }
+    },
+    {
       "action_type": "oversight_review",
       "parameters": {
         "actor": "analytics_assistant",
@@ -120,30 +140,10 @@
       }
     },
     {
-      "action_type": "validate",
-      "parameters": {
-        "compliance_tier_type": "categorical_nonempty",
-        "ticket_priority_type": "categorical_nonempty"
-      }
-    },
-    {
       "action_type": "delegate",
       "parameters": {
-        "actor": "finance_bot",
-        "objective": "invoice cleanup"
-      }
-    },
-    {
-      "action_type": "validate",
-      "parameters": {
-        "compliance_tier_type": "categorical_nonempty",
-        "ticket_priority_type": "categorical_nonempty"
-      }
-    },
-    {
-      "action_type": "resolve_alert",
-      "parameters": {
-        "actor": "finance_bot"
+        "actor": "support_lead",
+        "objective": "critical ticket triage"
       }
     },
     {
