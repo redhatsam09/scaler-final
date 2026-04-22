@@ -13,14 +13,19 @@ REQUIRED DELIVERABLES
 
 [✓] Theme alignment and innovation upgrades
     - Multi-app enterprise orchestration task
-    - Multi-actor delegation and escalation flow
-    - Mid-episode schema/policy drift
+    - Multi-actor delegation, escalation flow, and explicit incentive conflicts
+    - Deceptive actor recommendation with oversight_review detection
+    - Dynamic mid-episode schema/policy/T&C drift
+    - Economic cost model and stale-strategy penalty
+    - Easy/medium/hard curriculum difficulty
     - Long-horizon episode budget (60 steps)
 
 [✓] Reward coherence and anti-gaming
     - Rubric-like graders in `src/graders.py`
     - Loop penalties and over-deletion penalties
     - KPI-aware grading for quality/compliance/latency
+    - Actor-alignment scoring for finance/support/sales
+    - Budget overflow and stale-policy penalties
 
 [✓] Environment-grounded training script
     - `training/trl_sft_training.py`
@@ -30,12 +35,20 @@ REQUIRED DELIVERABLES
     - `artifacts/reward_progression.csv`
     - `artifacts/reward_progression.json`
     - `artifacts/reward_progression.svg`
-    - Baseline vs mid vs trained from held-out seeds
+    - 5-seed mean/std baseline vs mid vs trained
+    - `artifacts/ablation_no_actor_actions.json`
+    - `artifacts/heldout_drift_scenario.json`
 
 [✓] Training evidence artifacts
     - `artifacts/trl_sft_training_metrics.json`
     - `artifacts/training_curve.csv`
     - `artifacts/training_curve.svg`
+    - `training/trl_sft_training.py` for environment-grounded training
+    - `training/trl_unsloth_compliance_notebook.ipynb` for TRL/Unsloth checkbox compliance
+
+[✓] Storytelling figures
+    - `artifacts/world_model_flow.svg`
+    - `artifacts/failure_success_trajectory.svg`
 
 [✓] World-modeling demonstration
     - `python world_modeling_demo.py`

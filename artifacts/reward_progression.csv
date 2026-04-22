@@ -1,4 +1,4 @@
-stage,average_score,std_score
-baseline,0.442923,0.097888
-mid,0.636090,0.203447
-trained,0.726893,0.160171
+stage,five_seed_mean,five_seed_std
+baseline,0.436476,0.004734
+mid,0.630662,0.005775
+trained,0.742239,0.006115

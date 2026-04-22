@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="300" viewBox="0 0 780 300">
+<rect width="780" height="300" fill="#ffffff"/>
+<text x="35" y="34" font-family="Arial" font-size="18" font-weight="700" fill="#111827">Failure Before / Success After Trajectory</text>
+<g font-family="Arial">
+  <line x1="70" y1="230" x2="720" y2="230" stroke="#1f2937"/>
+  <line x1="70" y1="70" x2="70" y2="230" stroke="#1f2937"/>
+  <rect x="145" y="156" width="110" height="74" fill="#fca5a5" stroke="#b91c1c"/>
+  <rect x="335" y="101" width="110" height="129" fill="#86efac" stroke="#15803d"/>
+  <rect x="525" y="100" width="110" height="130" fill="#93c5fd" stroke="#1d4ed8"/>
+  <text x="130" y="254" font-size="12" fill="#334155">no actor actions</text>
+  <text x="334" y="254" font-size="12" fill="#334155">full policy</text>
+  <text x="511" y="254" font-size="12" fill="#334155">held-out hard drift</text>
+  <text x="158" y="146" font-size="13" font-weight="700" fill="#7f1d1d">0.404</text>
+  <text x="352" y="91" font-size="13" font-weight="700" fill="#14532d">0.701</text>
+  <text x="542" y="90" font-size="13" font-weight="700" fill="#1e3a8a">0.705</text>
+  <text x="88" y="91" font-size="12" fill="#475569">grade</text>
+  <text x="145" y="279" font-size="12" fill="#475569">Failure: ignores finance/support/sales conflict and deceptive advice.</text>
+  <text x="335" y="279" font-size="12" fill="#475569">Success: negotiates actors, checks oversight, adapts to T&amp;C drift.</text>
+</g>
+</svg>

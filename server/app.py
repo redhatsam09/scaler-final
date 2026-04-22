@@ -155,6 +155,9 @@ async def reset(request: Request):
         task_id = request.query_params.get("task_id") or payload.get("task_id") or "task_missing_values"
         if not isinstance(task_id, str) or not task_id:
             task_id = "task_missing_values"
+        difficulty = request.query_params.get("difficulty") or payload.get("difficulty")
+        if difficulty is not None and not isinstance(difficulty, str):
+            difficulty = None
 
         seed = _coerce_seed(request.query_params.get("seed"))
         if seed is None:
@@ -165,7 +168,7 @@ async def reset(request: Request):
             env = DataCleaningEnv(seed=seed if seed is not None else DEFAULT_ENV_SEED)
             environments[session_id] = env
 
-        observation = env.reset(task_id=task_id, seed=seed)
+        observation = env.reset(task_id=task_id, seed=seed, difficulty=difficulty)
 
         return ResetResponse(
             session_id=session_id,
@@ -180,7 +183,12 @@ async def reset(request: Request):
                 "episode_progress": observation.episode_progress,
                 "drift_notice": observation.drift_notice,
                 "actor_messages": observation.actor_messages,
+                "actor_objectives": observation.actor_objectives,
+                "actor_conflicts": observation.actor_conflicts,
                 "kpi_snapshot": observation.kpi_snapshot,
+                "policy_version": observation.policy_version,
+                "difficulty": observation.difficulty,
+                "economic_status": observation.economic_status,
             },
             task_id=observation.task_id,
             step=observation.step_count,
@@ -214,7 +222,12 @@ async def step(request: StepRequest):
                 "episode_progress": observation.episode_progress,
                 "drift_notice": observation.drift_notice,
                 "actor_messages": observation.actor_messages,
+                "actor_objectives": observation.actor_objectives,
+                "actor_conflicts": observation.actor_conflicts,
                 "kpi_snapshot": observation.kpi_snapshot,
+                "policy_version": observation.policy_version,
+                "difficulty": observation.difficulty,
+                "economic_status": observation.economic_status,
             },
             reward=reward.value,
             done=done,

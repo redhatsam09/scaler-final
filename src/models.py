@@ -19,9 +19,29 @@ class Observation(BaseModel):
         default_factory=list,
         description="Recent messages from simulated actors in the environment",
     )
+    actor_objectives: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Current actor incentives/objectives in the simulated enterprise",
+    )
+    actor_conflicts: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Explicit incentive conflicts that create multi-agent negotiation pressure",
+    )
     kpi_snapshot: Dict[str, float] = Field(
         default_factory=dict,
         description="Current high-level KPI metrics visible to the agent",
+    )
+    policy_version: int = Field(
+        default=1,
+        description="Current policy/T&C version enforced by the environment",
+    )
+    difficulty: str = Field(
+        default="medium",
+        description="Curriculum difficulty level for the episode: easy, medium, or hard",
+    )
+    economic_status: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Economic trade-off context such as cost used, budget, and cost efficiency",
     )
 
 
@@ -29,7 +49,7 @@ class Action(BaseModel):
     action_type: str = Field(
         description=(
             "Type of action: analyze, impute, deduplicate, validate, report_findings, "
-            "delegate, resolve_alert, or reconcile_apps"
+            "delegate, resolve_alert, reconcile_apps, or oversight_review"
         )
     )
     target_columns: List[str] = Field(description="Columns to apply action on")

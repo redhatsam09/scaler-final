@@ -1,10 +1,8 @@
 {
   "task_missing_values": [
     {
-      "action_type": "deduplicate",
-      "parameters": {
-        "keep": "first"
-      }
+      "action_type": "analyze",
+      "parameters": {}
     },
     {
       "action_type": "impute",
@@ -31,7 +29,9 @@
       "parameters": {
         "include_summary": true,
         "include_quality_score": true,
-        "include_recommendations": true
+        "include_recommendations": true,
+        "include_actor_tradeoffs": true,
+        "include_budget_analysis": true
       }
     }
   ],
@@ -67,7 +67,9 @@
       "parameters": {
         "include_summary": true,
         "include_quality_score": true,
-        "include_recommendations": true
+        "include_recommendations": true,
+        "include_actor_tradeoffs": true,
+        "include_budget_analysis": true
       }
     }
   ],
@@ -79,14 +81,14 @@
       }
     },
     {
+      "action_type": "analyze",
+      "parameters": {}
+    },
+    {
       "action_type": "deduplicate",
       "parameters": {
         "keep": "first"
       }
-    },
-    {
-      "action_type": "validate",
-      "parameters": {}
     },
     {
       "action_type": "impute",
@@ -103,32 +105,39 @@
       "parameters": {
         "include_summary": true,
         "include_quality_score": true,
-        "include_recommendations": true
+        "include_recommendations": true,
+        "include_actor_tradeoffs": true,
+        "include_budget_analysis": true
       }
     }
   ],
   "task_enterprise_orchestration": [
     {
-      "action_type": "resolve_alert",
+      "action_type": "oversight_review",
       "parameters": {
-        "actor": "finance_bot"
+        "actor": "analytics_assistant",
+        "explain": true
       }
     },
     {
-      "action_type": "reconcile_apps",
+      "action_type": "validate",
       "parameters": {
-        "join_key": "account_id"
+        "compliance_tier_type": "categorical_nonempty",
+        "ticket_priority_type": "categorical_nonempty"
       }
-    },
-    {
-      "action_type": "analyze",
-      "parameters": {}
     },
     {
       "action_type": "delegate",
       "parameters": {
         "actor": "finance_bot",
         "objective": "invoice cleanup"
+      }
+    },
+    {
+      "action_type": "validate",
+      "parameters": {
+        "compliance_tier_type": "categorical_nonempty",
+        "ticket_priority_type": "categorical_nonempty"
       }
     },
     {
@@ -142,7 +151,9 @@
       "parameters": {
         "include_summary": true,
         "include_quality_score": true,
-        "include_recommendations": true
+        "include_recommendations": true,
+        "include_actor_tradeoffs": true,
+        "include_budget_analysis": true
       }
     }
   ]

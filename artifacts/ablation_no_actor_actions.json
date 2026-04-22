@@ -1,0 +1,23 @@
+{
+  "description": "Enterprise task ablation comparing full policy against the same action program with actor-facing actions removed.",
+  "actor_actions_removed": [
+    "delegate",
+    "oversight_review",
+    "resolve_alert"
+  ],
+  "full_policy": {
+    "average_score": 0.701052,
+    "std_score": 0.051774,
+    "task_scores": {
+      "task_enterprise_orchestration": 0.701052
+    }
+  },
+  "no_actor_actions": {
+    "average_score": 0.403614,
+    "std_score": 0.046384,
+    "task_scores": {
+      "task_enterprise_orchestration": 0.403614
+    }
+  },
+  "delta_full_minus_ablation": 0.297437
+}

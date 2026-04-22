@@ -31,10 +31,10 @@ tasks:
 
   - id: task_enterprise_orchestration
     name: Multi-App Enterprise Workflow Orchestration
-    description: Coordinate CRM, Billing, and Support workflows under schema drift and actor escalations
+    description: Coordinate CRM, Billing, and Support workflows under schema drift, actor conflicts, oversight, and economic constraints
     difficulty: hard
     grader: src.graders:EnterpriseOrchestrationGrader
 
 features:
-  max_steps: 60
+  max_steps: 80
   episode_timeout: 300

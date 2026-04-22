@@ -81,7 +81,10 @@ ACTION_SPACE: Dict[str, List[Dict]] = {
         {"action_type": "analyze", "parameters": {}},
         {"action_type": "delegate", "parameters": {"actor": "finance_bot", "objective": "invoice cleanup"}},
         {"action_type": "delegate", "parameters": {"actor": "support_lead", "objective": "critical ticket triage"}},
+        {"action_type": "delegate", "parameters": {"actor": "sales_ops", "objective": "protect conversion"}},
         {"action_type": "resolve_alert", "parameters": {"actor": "finance_bot"}},
+        {"action_type": "resolve_alert", "parameters": {"actor": "support_lead"}},
+        {"action_type": "oversight_review", "parameters": {"actor": "analytics_assistant", "explain": True}},
         {"action_type": "reconcile_apps", "parameters": {"join_key": "account_id"}},
         {
             "action_type": "validate",
@@ -96,6 +99,8 @@ ACTION_SPACE: Dict[str, List[Dict]] = {
                 "include_summary": True,
                 "include_quality_score": True,
                 "include_recommendations": True,
+                "include_actor_tradeoffs": True,
+                "include_budget_analysis": True,
             },
         },
     ],
@@ -171,6 +176,8 @@ def _random_policy(rng: random.Random) -> Dict[str, List[Dict]]:
                 "include_summary": True,
                 "include_quality_score": True,
                 "include_recommendations": True,
+                "include_actor_tradeoffs": True,
+                "include_budget_analysis": True,
             },
         }
         policy[task_id] = sequence
@@ -190,6 +197,8 @@ def _mutate_policy(policy: Dict[str, List[Dict]], rng: random.Random) -> Dict[st
                 "include_summary": True,
                 "include_quality_score": True,
                 "include_recommendations": True,
+                "include_actor_tradeoffs": True,
+                "include_budget_analysis": True,
             },
         }
     return candidate

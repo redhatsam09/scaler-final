@@ -1,0 +1,394 @@
+{
+  "description": "Held-out enterprise scenario with hard curriculum drift, higher deception probability, tighter budget, and faster policy updates.",
+  "average_score": 0.704873,
+  "std_score": 0.055811,
+  "task_scores": {
+    "task_enterprise_orchestration": 0.704873
+  },
+  "episodes": [
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9900,
+      "difficulty": "hard",
+      "score": 0.666539,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 31.583,
+        "remaining_budget": 58.417,
+        "cost_efficiency": 0.649078
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.83908,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.73339,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.649078,
+        "support_sla_health": 0.532203,
+        "sales_conversion_health": 0.509932
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9901,
+      "difficulty": "hard",
+      "score": 0.673292,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 28.1193,
+        "remaining_budget": 61.8807,
+        "cost_efficiency": 0.687563
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.853608,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.751864,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.687563,
+        "support_sla_health": 0.620339,
+        "sales_conversion_health": 0.485356
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9902,
+      "difficulty": "hard",
+      "score": 0.670905,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 29.3816,
+        "remaining_budget": 60.6184,
+        "cost_efficiency": 0.673538
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.848281,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.743729,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.673538,
+        "support_sla_health": 0.6,
+        "sales_conversion_health": 0.469153
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9903,
+      "difficulty": "hard",
+      "score": 0.782347,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": true,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 30.0253,
+        "remaining_budget": 59.9747,
+        "cost_efficiency": 0.666385
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.837143,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.702034,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.666385,
+        "support_sla_health": 0.620339,
+        "sales_conversion_health": 0.494644
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9904,
+      "difficulty": "hard",
+      "score": 0.79054,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": true,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 27.2858,
+        "remaining_budget": 62.7142,
+        "cost_efficiency": 0.696824
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.849007,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.734915,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.696824,
+        "support_sla_health": 0.589831,
+        "sales_conversion_health": 0.475017
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9905,
+      "difficulty": "hard",
+      "score": 0.663349,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 30.8206,
+        "remaining_budget": 59.1794,
+        "cost_efficiency": 0.657549
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.843438,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.708814,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.657549,
+        "support_sla_health": 0.572881,
+        "sales_conversion_health": 0.474373
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9906,
+      "difficulty": "hard",
+      "score": 0.667504,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 31.1217,
+        "remaining_budget": 58.8783,
+        "cost_efficiency": 0.654203
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.843438,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.729831,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.654203,
+        "support_sla_health": 0.552542,
+        "sales_conversion_health": 0.508407
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9907,
+      "difficulty": "hard",
+      "score": 0.665925,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 28.429,
+        "remaining_budget": 61.571,
+        "cost_efficiency": 0.684123
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.852155,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.691186,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.684123,
+        "support_sla_health": 0.60678,
+        "sales_conversion_health": 0.522373
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9908,
+      "difficulty": "hard",
+      "score": 0.668492,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 29.2038,
+        "remaining_budget": 60.7962,
+        "cost_efficiency": 0.675514
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.844649,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.71322,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.675514,
+        "support_sla_health": 0.59661,
+        "sales_conversion_health": 0.477017
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9909,
+      "difficulty": "hard",
+      "score": 0.665795,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 27.7936,
+        "remaining_budget": 62.2064,
+        "cost_efficiency": 0.691182
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.853123,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.712712,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.691182,
+        "support_sla_health": 0.59661,
+        "sales_conversion_health": 0.494881
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9910,
+      "difficulty": "hard",
+      "score": 0.78934,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": true,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 30.2542,
+        "remaining_budget": 59.7458,
+        "cost_efficiency": 0.663842
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.843438,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.73678,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.663842,
+        "support_sla_health": 0.623729,
+        "sales_conversion_health": 0.475627
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9911,
+      "difficulty": "hard",
+      "score": 0.659741,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 29.9583,
+        "remaining_budget": 60.0417,
+        "cost_efficiency": 0.66713
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.848281,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.701695,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.66713,
+        "support_sla_health": 0.6,
+        "sales_conversion_health": 0.520034
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9912,
+      "difficulty": "hard",
+      "score": 0.793233,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": true,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 26.4587,
+        "remaining_budget": 63.5413,
+        "cost_efficiency": 0.706014
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.849734,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.742373,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.706014,
+        "support_sla_health": 0.59322,
+        "sales_conversion_health": 0.484441
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9913,
+      "difficulty": "hard",
+      "score": 0.668092,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 28.225,
+        "remaining_budget": 61.775,
+        "cost_efficiency": 0.686388
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.844891,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.715254,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.686388,
+        "support_sla_health": 0.647458,
+        "sales_conversion_health": 0.49722
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9914,
+      "difficulty": "hard",
+      "score": 0.781782,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": true,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 28.7124,
+        "remaining_budget": 61.2876,
+        "cost_efficiency": 0.680973
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.845617,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.698983,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.680973,
+        "support_sla_health": 0.616949,
+        "sales_conversion_health": 0.478203
+      }
+    },
+    {
+      "task_id": "task_enterprise_orchestration",
+      "seed": 9915,
+      "difficulty": "hard",
+      "score": 0.671092,
+      "policy_version": 3,
+      "drift_active": true,
+      "deception_detected": false,
+      "economic_status": {
+        "budget": 90.0,
+        "cost_used": 29.0113,
+        "remaining_budget": 60.9887,
+        "cost_efficiency": 0.677652
+      },
+      "kpi_snapshot": {
+        "quality_index": 0.849976,
+        "backlog_pressure": 0.92,
+        "policy_compliance": 0.731525,
+        "workflow_latency": 0.94375,
+        "finance_cost_efficiency": 0.677652,
+        "support_sla_health": 0.613559,
+        "sales_conversion_health": 0.490814
+      }
+    }
+  ]
+}

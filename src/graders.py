@@ -1,7 +1,3 @@
-from typing import List
-
-import pandas as pd
-
 from src.environment import EpisodeState
 
 
@@ -57,11 +53,33 @@ def _kpi_component(episode_state: EpisodeState) -> float:
     quality = episode_state.kpis.get("quality_index", 0.0)
     compliance = episode_state.kpis.get("policy_compliance", 0.0)
     latency = episode_state.kpis.get("workflow_latency", 0.0)
-    return min(1.0, max(0.0, quality * 0.5 + compliance * 0.3 + latency * 0.2))
+    return min(1.0, max(0.0, quality * 0.45 + compliance * 0.35 + latency * 0.2))
+
+
+def _actor_alignment_component(episode_state: EpisodeState) -> float:
+    if not episode_state.kpis:
+        return 0.0
+    finance = episode_state.kpis.get("finance_cost_efficiency", 0.0)
+    support = episode_state.kpis.get("support_sla_health", 0.0)
+    sales = episode_state.kpis.get("sales_conversion_health", 0.0)
+    return min(1.0, max(0.0, finance * 0.35 + support * 0.35 + sales * 0.3))
+
+
+def _economic_penalty(episode_state: EpisodeState) -> float:
+    overflow = max(0.0, episode_state.economic_cost_used - episode_state.economic_budget)
+    if overflow <= 0:
+        return 0.0
+    return min(0.3, overflow / max(episode_state.economic_budget, 1.0))
+
+
+def _stale_penalty(episode_state: EpisodeState) -> float:
+    if episode_state.stale_penalty_active:
+        return 0.08
+    return 0.0
 
 
 def _common_penalties(episode_state: EpisodeState) -> float:
-    return _loop_penalty(episode_state) + _excessive_deletion_penalty(episode_state)
+    return _loop_penalty(episode_state) + _excessive_deletion_penalty(episode_state) + _economic_penalty(episode_state)
 
 
 class MissingValuesGrader:
@@ -88,6 +106,7 @@ class MissingValuesGrader:
 
         base += _kpi_component(episode_state) * 0.12
         base -= _common_penalties(episode_state)
+        base -= _stale_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
 
 
@@ -122,6 +141,7 @@ class DuplicateHandlingGrader:
 
         base += _kpi_component(episode_state) * 0.1
         base -= _common_penalties(episode_state)
+        base -= _stale_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
 
 
@@ -142,7 +162,7 @@ class ComplexValidationGrader:
         dup_gain = max(0.0, (original_dups - current_dups) / max(original_dups, 1.0)) if original_dups > 0 else 0.5
 
         action_diversity = len(set(action.get("action_type") for action in episode_state.actions_taken))
-        diversity_score = min(1.0, action_diversity / 6.0)
+        diversity_score = min(1.0, action_diversity / 7.0)
 
         strategic_bonus = 0.0
         if _has_action(episode_state, "analyze"):
@@ -155,10 +175,14 @@ class ComplexValidationGrader:
             strategic_bonus += 0.12
         if episode_state.drift_active and _has_action(episode_state, "validate"):
             strategic_bonus += 0.08
+        if episode_state.policy_version >= 3 and _has_action(episode_state, "oversight_review"):
+            strategic_bonus += 0.06
 
         base = missing_gain * 0.25 + dup_gain * 0.2 + diversity_score * 0.2 + strategic_bonus
-        base += _kpi_component(episode_state) * 0.15
+        base += _kpi_component(episode_state) * 0.12
+        base += _actor_alignment_component(episode_state) * 0.08
         base -= _common_penalties(episode_state)
+        base -= _stale_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
 
 
@@ -180,7 +204,7 @@ class EnterpriseOrchestrationGrader:
         resolved = sum(1 for status in episode_state.delegated_work.values() if status == "resolved")
         delegation_score = 0.0
         if delegated > 0:
-            delegation_score = 0.4 + 0.6 * (resolved / delegated)
+            delegation_score = 0.35 + 0.65 * (resolved / delegated)
 
         drift_handled = 0.0
         if episode_state.drift_active and "compliance_tier" in dataset.columns:
@@ -193,18 +217,37 @@ class EnterpriseOrchestrationGrader:
             cross_app_alignment = 1.0 - float(conflicts) / max(float(len(dataset)), 1.0)
 
         action_diversity = len(set(action.get("action_type") for action in episode_state.actions_taken))
-        diversity = min(1.0, action_diversity / 7.0)
+        diversity = min(1.0, action_diversity / 8.0)
+
+        oversight_component = 0.0
+        if _has_action(episode_state, "oversight_review"):
+            oversight_component += 0.08
+        if episode_state.deception_detected:
+            oversight_component += 0.12
+        elif episode_state.deceptive_actor and not episode_state.deception_detected:
+            oversight_component -= 0.08
+
+        policy_adaptability = 0.0
+        if episode_state.policy_version >= 2 and _has_action(episode_state, "validate"):
+            policy_adaptability += 0.06
+        if episode_state.policy_version >= 3 and _has_action(episode_state, "reconcile_apps"):
+            policy_adaptability += 0.06
 
         base = (
-            missing_gain * 0.2
-            + dup_gain * 0.15
-            + delegation_score * 0.2
-            + drift_handled * 0.15
+            missing_gain * 0.16
+            + dup_gain * 0.12
+            + delegation_score * 0.16
+            + drift_handled * 0.14
             + cross_app_alignment * 0.12
-            + diversity * 0.08
-            + _kpi_component(episode_state) * 0.1
+            + diversity * 0.07
+            + _kpi_component(episode_state) * 0.12
+            + _actor_alignment_component(episode_state) * 0.08
+            + oversight_component
+            + policy_adaptability
         )
         if _has_action(episode_state, "report_findings"):
-            base += 0.05
+            base += 0.04
         base -= _common_penalties(episode_state)
+        base -= _stale_penalty(episode_state)
         return _strict_task_score(min(1.0, max(0.0, base)))
+

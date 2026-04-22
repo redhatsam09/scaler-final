@@ -15,15 +15,17 @@ An OpenEnv environment for **Theme #3 World Modeling (Professional Tasks)** with
 - **Theme #2 Long-Horizon Planning** (schema drift + delayed coordination effects),
 - Patronus-style **schema/policy drift** behavior.
 
-The environment simulates CRM + Billing + Support workflows in one partially observable world. Agents must choose tool actions, coordinate multiple actors, handle contract drift, and improve enterprise KPIs over multi-step episodes.
+The environment simulates CRM + Billing + Support workflows in one partially observable world. Agents must choose tool actions, negotiate conflicting actor incentives, handle contract drift, detect deceptive recommendations, and improve enterprise KPIs over multi-step episodes.
+
+![Hidden state to action to KPI to grade loop](artifacts/world_model_flow.svg)
 
 ## Why this is competitive
 
 This project is designed around the judging rubric:
-- **Innovation (40%)**: multi-app orchestration + actor coordination + drift.
-- **Storytelling (30%)**: clear demo script and evidence artifacts.
-- **Reward improvement evidence (20%)**: baseline vs mid vs trained reward curves from real environment rollouts.
-- **Reward/training pipeline (10%)**: environment-grounded policy optimization and grading.
+- **Innovation (40%)**: multi-app orchestration, conflicting actor incentives, deceptive actor oversight, dynamic policy drift, economic cost tradeoffs, and curriculum difficulty.
+- **Storytelling (30%)**: clear demo script plus generated figures for hidden state flow and failure-before/success-after trajectories.
+- **Reward improvement evidence (20%)**: 5-seed mean/std, held-out hard-drift scenario, and no-actor-action ablation from real environment rollouts.
+- **Reward/training pipeline (10%)**: environment-grounded policy optimization plus explicit TRL/Unsloth notebook artifact.
 
 ## Environment design
 
@@ -44,6 +46,23 @@ This project is designed around the judging rubric:
 - `delegate`
 - `resolve_alert`
 - `reconcile_apps`
+- `oversight_review`
+
+### Actor incentives and conflicts
+
+The enterprise task is not only workflow automation. Each episode exposes actor objectives and conflicts:
+
+- `finance_bot`: minimizes write-offs and operation cost.
+- `support_lead`: protects SLA and critical ticket backlog.
+- `sales_ops`: maximizes conversion and account coverage.
+- `compliance_officer`: enforces the latest policy/T&C version.
+- `analytics_assistant`: explains KPIs, but can occasionally issue a deceptive shortcut recommendation.
+
+Key conflicts:
+
+- Finance rejects expensive fixes while support asks for costly escalations.
+- Sales prioritizes high-conversion accounts while support prioritizes SLA risk.
+- Analytics may propose KPI shortcuts while compliance requires explainable policy-safe changes.
 
 ### World modeling dynamics
 
@@ -53,6 +72,18 @@ This project is designed around the judging rubric:
   - new `compliance_tier` field,
   - invoice status contract change (`pending` → `awaiting_payment`),
   - new compliance validation requirement.
+- Dynamic T&C updates during the same episode:
+  - policy v2 activates compliance-tier checks,
+  - policy v3 requires high-risk EU accounts to satisfy stricter ticket/invoice closure rules,
+  - stale strategies after policy changes are penalized.
+- Curriculum difficulty:
+  - `easy`, `medium`, and `hard` change drift timing, deception probability, cost budget, and cost noise.
+- Economic cost model:
+  - each action has an operation cost,
+  - reward trades off quality, SLA, conversion, compliance, latency, and remaining budget.
+- Deceptive actor + oversight:
+  - `analytics_assistant` can recommend a wrong shortcut,
+  - `oversight_review` detects and explains the deceptive recommendation.
 
 ### Anti-gaming reward design
 
@@ -61,6 +92,8 @@ This project is designed around the judging rubric:
 - Loop penalties for repeated action spam.
 - Over-deletion penalties for destructive shortcuts.
 - KPI-aware scoring (quality/compliance/latency).
+- Actor-alignment scoring (finance cost efficiency, support SLA health, sales conversion health).
+- Budget overflow and stale-policy penalties.
 
 ## API
 
@@ -127,6 +160,20 @@ Generates:
 - `artifacts/reward_progression.csv`
 - `artifacts/reward_progression.json`
 - `artifacts/reward_progression.svg`
+- `artifacts/ablation_no_actor_actions.json`
+- `artifacts/heldout_drift_scenario.json`
+- `artifacts/world_model_flow.svg`
+- `artifacts/failure_success_trajectory.svg`
+
+![Failure before and success after trajectory](artifacts/failure_success_trajectory.svg)
+
+3) Optional explicit TRL/Unsloth compliance notebook:
+
+```text
+training/trl_unsloth_compliance_notebook.ipynb
+```
+
+This notebook is kept as a judge-friendly TRL/Unsloth artifact. The stronger training evidence remains the environment-grounded rollout pipeline above.
 
 ## Validation commands
 

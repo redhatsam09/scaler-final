@@ -1,302 +1,302 @@
 [
   {
     "iteration": 1,
-    "average_score": 0.442922,
-    "best_score": 0.442922
+    "average_score": 0.447418,
+    "best_score": 0.447418
   },
   {
     "iteration": 2,
-    "average_score": 0.44285,
-    "best_score": 0.442922
+    "average_score": 0.444211,
+    "best_score": 0.447418
   },
   {
     "iteration": 3,
-    "average_score": 0.451917,
-    "best_score": 0.451917
+    "average_score": 0.507732,
+    "best_score": 0.507732
   },
   {
     "iteration": 4,
-    "average_score": 0.451853,
-    "best_score": 0.451917
+    "average_score": 0.513448,
+    "best_score": 0.513448
   },
   {
     "iteration": 5,
-    "average_score": 0.451369,
-    "best_score": 0.451917
+    "average_score": 0.506949,
+    "best_score": 0.513448
   },
   {
     "iteration": 6,
-    "average_score": 0.453347,
-    "best_score": 0.453347
+    "average_score": 0.501665,
+    "best_score": 0.513448
   },
   {
     "iteration": 7,
-    "average_score": 0.453065,
-    "best_score": 0.453347
+    "average_score": 0.451561,
+    "best_score": 0.513448
   },
   {
     "iteration": 8,
-    "average_score": 0.452092,
-    "best_score": 0.453347
+    "average_score": 0.50632,
+    "best_score": 0.513448
   },
   {
     "iteration": 9,
-    "average_score": 0.451457,
-    "best_score": 0.453347
+    "average_score": 0.507833,
+    "best_score": 0.513448
   },
   {
     "iteration": 10,
-    "average_score": 0.452275,
-    "best_score": 0.453347
+    "average_score": 0.446279,
+    "best_score": 0.513448
   },
   {
     "iteration": 11,
-    "average_score": 0.455099,
-    "best_score": 0.455099
+    "average_score": 0.523286,
+    "best_score": 0.523286
   },
   {
     "iteration": 12,
-    "average_score": 0.454596,
-    "best_score": 0.455099
+    "average_score": 0.531218,
+    "best_score": 0.531218
   },
   {
     "iteration": 13,
-    "average_score": 0.455854,
-    "best_score": 0.455854
+    "average_score": 0.563347,
+    "best_score": 0.563347
   },
   {
     "iteration": 14,
-    "average_score": 0.455525,
-    "best_score": 0.455854
+    "average_score": 0.556327,
+    "best_score": 0.563347
   },
   {
     "iteration": 15,
-    "average_score": 0.433136,
-    "best_score": 0.455854
+    "average_score": 0.513724,
+    "best_score": 0.563347
   },
   {
     "iteration": 16,
-    "average_score": 0.542654,
-    "best_score": 0.542654
+    "average_score": 0.634242,
+    "best_score": 0.634242
   },
   {
     "iteration": 17,
-    "average_score": 0.541023,
-    "best_score": 0.542654
+    "average_score": 0.583785,
+    "best_score": 0.634242
   },
   {
     "iteration": 18,
-    "average_score": 0.541359,
-    "best_score": 0.542654
+    "average_score": 0.6291,
+    "best_score": 0.634242
   },
   {
     "iteration": 19,
-    "average_score": 0.547205,
-    "best_score": 0.547205
+    "average_score": 0.601541,
+    "best_score": 0.634242
   },
   {
     "iteration": 20,
-    "average_score": 0.53363,
-    "best_score": 0.547205
+    "average_score": 0.625754,
+    "best_score": 0.634242
   },
   {
     "iteration": 21,
-    "average_score": 0.535291,
-    "best_score": 0.547205
+    "average_score": 0.645112,
+    "best_score": 0.645112
   },
   {
     "iteration": 22,
-    "average_score": 0.537465,
-    "best_score": 0.547205
+    "average_score": 0.623173,
+    "best_score": 0.645112
   },
   {
     "iteration": 23,
-    "average_score": 0.539662,
-    "best_score": 0.547205
+    "average_score": 0.600128,
+    "best_score": 0.645112
   },
   {
     "iteration": 24,
-    "average_score": 0.533969,
-    "best_score": 0.547205
+    "average_score": 0.618942,
+    "best_score": 0.645112
   },
   {
     "iteration": 25,
-    "average_score": 0.537218,
-    "best_score": 0.547205
+    "average_score": 0.633872,
+    "best_score": 0.645112
   },
   {
     "iteration": 26,
-    "average_score": 0.532809,
-    "best_score": 0.547205
+    "average_score": 0.602326,
+    "best_score": 0.645112
   },
   {
     "iteration": 27,
-    "average_score": 0.539049,
-    "best_score": 0.547205
+    "average_score": 0.634789,
+    "best_score": 0.645112
   },
   {
     "iteration": 28,
-    "average_score": 0.566164,
-    "best_score": 0.566164
+    "average_score": 0.622166,
+    "best_score": 0.645112
   },
   {
     "iteration": 29,
-    "average_score": 0.628639,
-    "best_score": 0.628639
+    "average_score": 0.628597,
+    "best_score": 0.645112
   },
   {
     "iteration": 30,
-    "average_score": 0.587665,
-    "best_score": 0.628639
+    "average_score": 0.632907,
+    "best_score": 0.645112
   },
   {
     "iteration": 31,
-    "average_score": 0.581998,
-    "best_score": 0.628639
+    "average_score": 0.627614,
+    "best_score": 0.645112
   },
   {
     "iteration": 32,
-    "average_score": 0.605645,
-    "best_score": 0.628639
+    "average_score": 0.617131,
+    "best_score": 0.645112
   },
   {
     "iteration": 33,
-    "average_score": 0.635017,
-    "best_score": 0.635017
+    "average_score": 0.65908,
+    "best_score": 0.65908
   },
   {
     "iteration": 34,
-    "average_score": 0.658942,
-    "best_score": 0.658942
+    "average_score": 0.655513,
+    "best_score": 0.65908
   },
   {
     "iteration": 35,
-    "average_score": 0.66318,
-    "best_score": 0.66318
+    "average_score": 0.657452,
+    "best_score": 0.65908
   },
   {
     "iteration": 36,
-    "average_score": 0.668427,
-    "best_score": 0.668427
+    "average_score": 0.678357,
+    "best_score": 0.678357
   },
   {
     "iteration": 37,
-    "average_score": 0.666356,
-    "best_score": 0.668427
+    "average_score": 0.662255,
+    "best_score": 0.678357
   },
   {
     "iteration": 38,
-    "average_score": 0.666733,
-    "best_score": 0.668427
+    "average_score": 0.736474,
+    "best_score": 0.736474
   },
   {
     "iteration": 39,
-    "average_score": 0.715112,
-    "best_score": 0.715112
+    "average_score": 0.719581,
+    "best_score": 0.736474
   },
   {
     "iteration": 40,
-    "average_score": 0.721212,
-    "best_score": 0.721212
+    "average_score": 0.712892,
+    "best_score": 0.736474
   },
   {
     "iteration": 41,
-    "average_score": 0.720417,
-    "best_score": 0.721212
+    "average_score": 0.658362,
+    "best_score": 0.736474
   },
   {
     "iteration": 42,
-    "average_score": 0.656645,
-    "best_score": 0.721212
+    "average_score": 0.625125,
+    "best_score": 0.736474
   },
   {
     "iteration": 43,
-    "average_score": 0.654995,
-    "best_score": 0.721212
+    "average_score": 0.73762,
+    "best_score": 0.73762
   },
   {
     "iteration": 44,
-    "average_score": 0.696307,
-    "best_score": 0.721212
+    "average_score": 0.756748,
+    "best_score": 0.756748
   },
   {
     "iteration": 45,
-    "average_score": 0.729368,
-    "best_score": 0.729368
+    "average_score": 0.735917,
+    "best_score": 0.756748
   },
   {
     "iteration": 46,
-    "average_score": 0.732468,
-    "best_score": 0.732468
+    "average_score": 0.693372,
+    "best_score": 0.756748
   },
   {
     "iteration": 47,
-    "average_score": 0.675456,
-    "best_score": 0.732468
+    "average_score": 0.700072,
+    "best_score": 0.756748
   },
   {
     "iteration": 48,
-    "average_score": 0.699531,
-    "best_score": 0.732468
+    "average_score": 0.713027,
+    "best_score": 0.756748
   },
   {
     "iteration": 49,
-    "average_score": 0.69228,
-    "best_score": 0.732468
+    "average_score": 0.749265,
+    "best_score": 0.756748
   },
   {
     "iteration": 50,
-    "average_score": 0.722228,
-    "best_score": 0.732468
+    "average_score": 0.742674,
+    "best_score": 0.756748
   },
   {
     "iteration": 51,
-    "average_score": 0.738766,
-    "best_score": 0.738766
+    "average_score": 0.768508,
+    "best_score": 0.768508
   },
   {
     "iteration": 52,
-    "average_score": 0.72432,
-    "best_score": 0.738766
+    "average_score": 0.743614,
+    "best_score": 0.768508
   },
   {
     "iteration": 53,
-    "average_score": 0.727086,
-    "best_score": 0.738766
+    "average_score": 0.769073,
+    "best_score": 0.769073
   },
   {
     "iteration": 54,
-    "average_score": 0.73395,
-    "best_score": 0.738766
+    "average_score": 0.724767,
+    "best_score": 0.769073
   },
   {
     "iteration": 55,
-    "average_score": 0.709693,
-    "best_score": 0.738766
+    "average_score": 0.716649,
+    "best_score": 0.769073
   },
   {
     "iteration": 56,
-    "average_score": 0.715022,
-    "best_score": 0.738766
+    "average_score": 0.698894,
+    "best_score": 0.769073
   },
   {
     "iteration": 57,
-    "average_score": 0.725817,
-    "best_score": 0.738766
+    "average_score": 0.753488,
+    "best_score": 0.769073
   },
   {
     "iteration": 58,
-    "average_score": 0.701446,
-    "best_score": 0.738766
+    "average_score": 0.736374,
+    "best_score": 0.769073
   },
   {
     "iteration": 59,
-    "average_score": 0.69244,
-    "best_score": 0.738766
+    "average_score": 0.734492,
+    "best_score": 0.769073
   },
   {
     "iteration": 60,
-    "average_score": 0.722304,
-    "best_score": 0.738766
+    "average_score": 0.690975,
+    "best_score": 0.769073
   }
 ]
