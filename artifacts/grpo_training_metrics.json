@@ -14,5 +14,5 @@
     "task_duplicate_handling",
     "task_complex_validation"
   ],
-  "dataset_path": "artifacts/grpo_training_dataset.json"
+  "dataset_path": "artifacts\\grpo_training_dataset.json"
 }
