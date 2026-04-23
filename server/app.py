@@ -421,9 +421,10 @@ async def close_session(request: CloseRequest):
 # ---- Gradio Interactive Demo ----
 
 def _build_gradio_demo():
-    """Build Gradio UI for judges to interact with the environment."""
+    \"\"\"Build Gradio UI for judges to interact with the environment.\"\"\"
     try:
         import gradio as gr
+        from pathlib import Path
     except ImportError:
         return None
 
@@ -438,33 +439,32 @@ def _build_gradio_demo():
         demo_session["task_id"] = task_id
 
         state_text = obs.natural_language_observation
-        kpi_text = "\n".join(f"  {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\n".join(f"  ⚠️ {s}" for s in obs.urgency_signals) if obs.urgency_signals else "  None"
-        actors = "\n".join(f"  💬 {m}" for m in obs.actor_messages) if obs.actor_messages else "  None"
+        kpi_text = "\\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
+        urgency = "\\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
+        actors = "\\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages) if obs.actor_messages else "- No active communications"
 
-        output = f"""🔄 **Environment Reset**
-**Task:** {task_id} | **Difficulty:** {difficulty} | **Seed:** {seed_val}
-**Dataset:** {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols
+        output = f\"\"\"### System Initialized
+**Task:** {task_id} | **Difficulty:** {difficulty} | **Seed:** {seed_val} | **Dataset:** {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols
 
-📝 **Natural Language Observation:**
+**Observation State:**
 {state_text}
 
-📊 **KPIs:**
+**Key Performance Indicators:**
 {kpi_text}
 
-⚠️ **Urgency Signals:**
+**Urgency Signals:**
 {urgency}
 
-💬 **Actor Messages:**
+**Actor Communications:**
 {actors}
 
 **Available Actions:** {', '.join(obs.available_actions)}
-"""
+\"\"\"
         return output, ""
 
     def step_env(action_type, target_cols, params_json, reasoning):
         if demo_session["obs"] is None:
-            return "❌ Reset the environment first!", ""
+            return "ERROR: System not initialized. Please reset the environment first.", ""
 
         try:
             params = json.loads(params_json) if params_json.strip() else {}
@@ -472,17 +472,16 @@ def _build_gradio_demo():
             params = {}
 
         cols = [c.strip() for c in target_cols.split(",") if c.strip()] if target_cols else []
-        action = Action(action_type=action_type, target_columns=cols, parameters=params, reasoning=reasoning or "Manual step")
+        action = Action(action_type=action_type, target_columns=cols, parameters=params, reasoning=reasoning or "System execution")
         obs, reward, done, info = demo_env.step(action)
         demo_session["obs"] = obs
         demo_session["history"].append({"action": action_type, "reward": reward.value})
 
-        kpi_text = "\n".join(f"  {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\n".join(f"  ⚠️ {s}" for s in obs.urgency_signals) if obs.urgency_signals else "  None"
-        actors = "\n".join(f"  💬 {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "  None"
-        components = "\n".join(f"  {k}: {v:.4f}" for k, v in info.get("components", {}).items())
+        kpi_text = "\\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
+        urgency = "\\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
+        actors = "\\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "- No active communications"
+        components = "\\n".join(f"- {k}: {v:.4f}" for k, v in info.get("components", {}).items())
 
-        # Get grade
         graders = {
             "task_missing_values": MissingValuesGrader,
             "task_duplicate_handling": DuplicateHandlingGrader,
@@ -493,63 +492,87 @@ def _build_gradio_demo():
 
         history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
 
-        output = f"""{'🏁 EPISODE COMPLETE' if done else f'Step {obs.step_count}'}
-**Action:** {action_type} | **Reward:** {reward.value:.4f} | **Grade:** {grade:.4f} | **Done:** {done}
+        output = f\"\"\"### {'EPISODE TERMINATED' if done else f'Execution Step: {obs.step_count}'}
+**Action Processed:** {action_type} | **Step Reward:** {reward.value:.4f} | **Cumulative Grade:** {grade:.4f} | **Status:** {'Done' if done else 'Active'}
 
-📝 **Observation:**
+**Observation State:**
 {obs.natural_language_observation}
 
-📊 **KPIs:**
+**Key Performance Indicators:**
 {kpi_text}
 
-🧮 **Reward Components:**
+**Reward Decomposition:**
 {components}
 
-⚠️ **Urgency:**
+**Urgency Signals:**
 {urgency}
 
-💬 **Actor Messages:**
+**Actor Communications:**
 {actors}
 
-📈 **History:** {history_text}
-"""
+**Execution History:** {history_text}
+\"\"\"
         return output, ""
 
-    with gr.Blocks(title="Enterprise Orchestration Environment") as demo:
-        gr.Markdown("""# 🏢 Enterprise Orchestration Environment
-*Multi-app RL environment with schema drift, actor conflicts, deceptive oversight, and economic budgets*
-        """)
+    custom_css = \"\"\"
+    .gradio-container { font-family: 'Inter', sans-serif; }
+    h1 { color: #1e293b; text-align: left; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    .gr-button-primary { background-color: #0f172a; color: white; font-weight: 600; border-radius: 4px; }
+    .gr-button-secondary { background-color: #334155; color: white; font-weight: 600; border-radius: 4px; }
+    .dark .gr-button-primary { background-color: #3b82f6; }
+    .dark .gr-button-secondary { background-color: #64748b; }
+    \"\"\"
 
-        with gr.Row():
-            with gr.Column(scale=1):
-                gr.Markdown("### 🔄 Reset")
-                task_dd = gr.Dropdown(
-                    choices=["task_enterprise_orchestration", "task_missing_values",
-                             "task_duplicate_handling", "task_complex_validation"],
-                    value="task_enterprise_orchestration", label="Task"
-                )
-                diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="medium", label="Difficulty")
-                seed_tb = gr.Textbox(value="42", label="Seed")
-                reset_btn = gr.Button("🔄 Reset Environment", variant="primary")
+    with gr.Blocks(title="Enterprise Orchestration Console", css=custom_css) as demo:
+        gr.Markdown("# Enterprise Orchestration Console")
+        gr.Markdown("*Professional LLM Reinforcement Learning Environment (Theme: World Modeling & Multi-Agent)*")
 
-                gr.Markdown("### 🎮 Step")
-                action_dd = gr.Dropdown(
-                    choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
-                             "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
-                             "inspect_actor", "audit_records", "request_policy_clarification"],
-                    value="analyze", label="Action"
-                )
-                cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status")
-                params_tb = gr.Textbox(label="Parameters (JSON)", value="{}", lines=2)
-                reason_tb = gr.Textbox(label="Reasoning", placeholder="Why this action?")
-                step_btn = gr.Button("▶️ Execute Step", variant="secondary")
+        with gr.Tabs():
+            with gr.TabItem("Environment Simulator"):
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        gr.Markdown("### Configuration")
+                        task_dd = gr.Dropdown(
+                            choices=["task_enterprise_orchestration", "task_missing_values",
+                                     "task_duplicate_handling", "task_complex_validation"],
+                            value="task_enterprise_orchestration", label="Task Identifier"
+                        )
+                        diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="medium", label="Simulation Difficulty")
+                        seed_tb = gr.Textbox(value="42", label="Random Seed")
+                        reset_btn = gr.Button("Initialize System", variant="primary")
 
-            with gr.Column(scale=2):
-                output_md = gr.Markdown("*Reset the environment to begin*")
-                error_md = gr.Markdown("")
+                        gr.Markdown("### Execution Panel")
+                        action_dd = gr.Dropdown(
+                            choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
+                                     "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
+                                     "inspect_actor", "audit_records", "request_policy_clarification"],
+                            value="analyze", label="Action Type"
+                        )
+                        cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status")
+                        params_tb = gr.Textbox(label="Action Parameters (JSON)", value="{}", lines=2)
+                        reason_tb = gr.Textbox(label="Strategic Reasoning", placeholder="Provide rationale for model execution...")
+                        step_btn = gr.Button("Execute Step", variant="secondary")
 
-        reset_btn.click(reset_env, inputs=[task_dd, diff_dd, seed_tb], outputs=[output_md, error_md])
-        step_btn.click(step_env, inputs=[action_dd, cols_tb, params_tb, reason_tb], outputs=[output_md, error_md])
+                    with gr.Column(scale=2):
+                        output_md = gr.Markdown("*Awaiting system initialization...*")
+                        error_md = gr.Markdown("")
+
+                reset_btn.click(reset_env, inputs=[task_dd, diff_dd, seed_tb], outputs=[output_md, error_md])
+                step_btn.click(step_env, inputs=[action_dd, cols_tb, params_tb, reason_tb], outputs=[output_md, error_md])
+
+            with gr.TabItem("Training Evidence (GRPO)"):
+                gr.Markdown(\"\"\"
+                ### Reinforcement Learning Performance Metrics
+                The following artifacts demonstrate the progressive capability improvement of an LLM agent trained on this environment using Generative Reward Policy Optimization (GRPO).
+                \"\"\")
+                with gr.Row():
+                    try:
+                        training_curve_path = str(Path(__file__).resolve().parents[1] / "artifacts" / "training_curve.svg")
+                        reward_progression_path = str(Path(__file__).resolve().parents[1] / "artifacts" / "reward_progression.svg")
+                        gr.Image(value=training_curve_path, type="filepath", label="Training Curve", show_download_button=False)
+                        gr.Image(value=reward_progression_path, type="filepath", label="Reward Progression", show_download_button=False)
+                    except Exception:
+                        gr.Markdown("*(Artifacts not found locally. Please run `training/evaluate_reward_improvement.py` to generate the plots.)*")
 
     return demo
 
