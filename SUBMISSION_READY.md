@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Technically strong and near-final**, blocked only by public external links (Colab/blog/video placeholders).
+**Submission-ready with links and deployment automation in place.**
 
 ## Competitive improvements completed
 
@@ -13,17 +13,22 @@
 - Added dynamic mid-episode schema drift and policy/T&C updates
 - Added economic cost model, stale-strategy penalties, and curriculum difficulty
 - Added anti-gaming reward logic, actor-alignment scoring, and rubric-style graders
+- Added weighted reward aggregation and adaptive stale-strategy penalties
+- Added episode timeout enforcement and timeout telemetry
+- Added thread-safe multi-session API handling, TTL cleanup, and close-session endpoint
 - Added environment-grounded training script and generated training curve artifacts
 - Added 5-seed mean/std, no-actor-action ablation, and held-out hard-drift evaluation
 - Added explicit TRL/Unsloth compliance notebook artifact
 - Updated docs/story to map directly to judging criteria
+- Added token-only Hugging Face deployment script
 
-## Blocking items (external links)
+## External links status
 
-Replace placeholders in `README.md`:
+All required README links are now present:
 
-1. `REPLACE_WITH_FINAL_COLAB_URL`
-2. `REPLACE_WITH_FINAL_BLOG_URL` or `REPLACE_WITH_FINAL_VIDEO_URL`
+1. Colab notebook link
+2. Public writeup link
+3. Public pitch/script link
 
 ## Evidence references
 

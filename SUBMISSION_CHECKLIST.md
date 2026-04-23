@@ -61,11 +61,12 @@ REQUIRED DELIVERABLES
     - https://huggingface.co/spaces/samdutta123/scaler-final-openenv
     - Interactive demo: /demo
 
-[ ] Public Colab URL
-    - Replace `REPLACE_WITH_FINAL_COLAB_URL` in README
+[✓] Public Colab URL
+    - https://colab.research.google.com/github/redhatsam09/scaler-final/blob/opus/training/colab_trl_sft_notebook.ipynb
 
-[ ] Public mini-blog or <2 min video URL
-    - Replace `REPLACE_WITH_FINAL_BLOG_URL` / `REPLACE_WITH_FINAL_VIDEO_URL` in README
+[✓] Public mini-blog / short pitch assets
+    - Writeup: https://github.com/redhatsam09/scaler-final/blob/opus/HACKATHON_WRITEUP.md
+    - Pitch script: https://github.com/redhatsam09/scaler-final/blob/opus/VIDEO_DEMO_GUIDE.md
 
 VALIDATION COMMANDS
 ===================

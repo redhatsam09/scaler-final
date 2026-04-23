@@ -5,22 +5,22 @@
   "episodes_per_task_eval": 10,
   "iterations": 60,
   "accepted_updates": 13,
-  "baseline_average_score": 0.423694,
-  "trained_average_score": 0.624493,
+  "baseline_average_score": 0.503694,
+  "trained_average_score": 0.704493,
   "improvement": 0.200799,
-  "baseline_std": 0.237398,
-  "trained_std": 0.22767,
+  "baseline_std": 0.246461,
+  "trained_std": 0.234635,
   "task_scores_baseline": {
-    "task_missing_values": 0.629173,
-    "task_duplicate_handling": 0.024351,
-    "task_complex_validation": 0.537931,
-    "task_enterprise_orchestration": 0.503321
+    "task_missing_values": 0.689173,
+    "task_duplicate_handling": 0.084351,
+    "task_complex_validation": 0.597931,
+    "task_enterprise_orchestration": 0.643321
   },
   "task_scores_trained": {
-    "task_missing_values": 0.803857,
-    "task_duplicate_handling": 0.244152,
-    "task_complex_validation": 0.774979,
-    "task_enterprise_orchestration": 0.674986
+    "task_missing_values": 0.863857,
+    "task_duplicate_handling": 0.304152,
+    "task_complex_validation": 0.834979,
+    "task_enterprise_orchestration": 0.814986
   },
   "task_improvement": {
     "task_missing_values": 0.174683,
@@ -40,136 +40,136 @@
     "delegate": 1
   },
   "artifacts": {
-    "policy": "artifacts\\learned_policy.json",
-    "policy_snapshots": "artifacts\\policy_snapshots.json",
-    "training_curve_json": "artifacts\\training_curve.json",
-    "training_curve_csv": "artifacts\\training_curve.csv",
-    "training_curve_svg": "artifacts\\training_curve.svg"
+    "policy": "artifacts/learned_policy.json",
+    "policy_snapshots": "artifacts/policy_snapshots.json",
+    "training_curve_json": "artifacts/training_curve.json",
+    "training_curve_csv": "artifacts/training_curve.csv",
+    "training_curve_svg": "artifacts/training_curve.svg"
   },
   "evaluation_rows": [
     {
       "stage": "baseline",
-      "average_score": 0.4175982455086385,
-      "std_score": 0.005056796298609238,
+      "average_score": 0.4875982455086384,
+      "std_score": 0.005056796298609217,
       "seed_group_scores": [
         {
           "base_seed": 6100,
-          "average_score": 0.414923,
-          "std_score": 0.131353
+          "average_score": 0.484923,
+          "std_score": 0.142811
         },
         {
           "base_seed": 6200,
-          "average_score": 0.418907,
-          "std_score": 0.135555
+          "average_score": 0.488907,
+          "std_score": 0.147463
         },
         {
           "base_seed": 6300,
-          "average_score": 0.420906,
-          "std_score": 0.137602
+          "average_score": 0.490906,
+          "std_score": 0.149707
         },
         {
           "base_seed": 6400,
-          "average_score": 0.423913,
-          "std_score": 0.140877
+          "average_score": 0.493913,
+          "std_score": 0.15333
         },
         {
           "base_seed": 6500,
-          "average_score": 0.409342,
-          "std_score": 0.124139
+          "average_score": 0.479342,
+          "std_score": 0.134888
         }
       ],
       "task_scores": {
-        "task_missing_values": 0.46982203976000003,
-        "task_duplicate_handling": 0.20415005620000004,
-        "task_complex_validation": 0.42944902731428575,
-        "task_enterprise_orchestration": 0.5669718587602681
+        "task_missing_values": 0.5298220397600001,
+        "task_duplicate_handling": 0.26415005620000004,
+        "task_complex_validation": 0.4894490273142858,
+        "task_enterprise_orchestration": 0.6669718587602681
       }
     },
     {
       "stage": "mid",
-      "average_score": 0.5966935938762532,
-      "std_score": 0.00590357779937305,
+      "average_score": 0.6766935938762534,
+      "std_score": 0.0059035777993730314,
       "seed_group_scores": [
         {
           "base_seed": 6100,
-          "average_score": 0.599063,
-          "std_score": 0.214045
+          "average_score": 0.679063,
+          "std_score": 0.224593
         },
         {
           "base_seed": 6200,
-          "average_score": 0.596194,
-          "std_score": 0.213843
+          "average_score": 0.676194,
+          "std_score": 0.22245
         },
         {
           "base_seed": 6300,
-          "average_score": 0.599647,
-          "std_score": 0.214763
+          "average_score": 0.679647,
+          "std_score": 0.223685
         },
         {
           "base_seed": 6400,
-          "average_score": 0.585678,
-          "std_score": 0.204882
+          "average_score": 0.665678,
+          "std_score": 0.212939
         },
         {
           "base_seed": 6500,
-          "average_score": 0.602885,
-          "std_score": 0.21595
+          "average_score": 0.682885,
+          "std_score": 0.227517
         }
       ],
       "task_scores": {
-        "task_missing_values": 0.7955848272698345,
-        "task_duplicate_handling": 0.24415005620000002,
-        "task_complex_validation": 0.6763956220749104,
-        "task_enterprise_orchestration": 0.6706438699602681
+        "task_missing_values": 0.8555848272698345,
+        "task_duplicate_handling": 0.3041500562,
+        "task_complex_validation": 0.7363956220749105,
+        "task_enterprise_orchestration": 0.810643869960268
       }
     },
     {
       "stage": "trained",
-      "average_score": 0.6211924524948563,
-      "std_score": 0.00623678410232602,
+      "average_score": 0.7011924524948563,
+      "std_score": 0.00623678410232604,
       "seed_group_scores": [
         {
           "base_seed": 6100,
-          "average_score": 0.623319,
-          "std_score": 0.226267
+          "average_score": 0.703319,
+          "std_score": 0.234208
         },
         {
           "base_seed": 6200,
-          "average_score": 0.619718,
-          "std_score": 0.226342
+          "average_score": 0.699718,
+          "std_score": 0.232476
         },
         {
           "base_seed": 6300,
-          "average_score": 0.624261,
-          "std_score": 0.22775
+          "average_score": 0.704261,
+          "std_score": 0.234088
         },
         {
           "base_seed": 6400,
-          "average_score": 0.610074,
-          "std_score": 0.219267
+          "average_score": 0.690074,
+          "std_score": 0.224651
         },
         {
           "base_seed": 6500,
-          "average_score": 0.628591,
-          "std_score": 0.229046
+          "average_score": 0.708591,
+          "std_score": 0.237831
         }
       ],
       "task_scores": {
-        "task_missing_values": 0.7955848272698345,
-        "task_duplicate_handling": 0.24415005620000002,
-        "task_complex_validation": 0.7743910565493224,
-        "task_enterprise_orchestration": 0.6706438699602681
+        "task_missing_values": 0.8555848272698345,
+        "task_duplicate_handling": 0.3041500562,
+        "task_complex_validation": 0.8343910565493224,
+        "task_enterprise_orchestration": 0.810643869960268
       }
     }
   ],
   "reward_progression_artifacts": {
-    "csv": "artifacts\\reward_progression.csv",
-    "json": "artifacts\\reward_progression.json",
-    "svg": "artifacts\\reward_progression.svg",
-    "ablation_no_actor_actions": "artifacts\\ablation_no_actor_actions.json",
-    "heldout_drift_scenario": "artifacts\\heldout_drift_scenario.json",
-    "world_model_flow": "artifacts\\world_model_flow.svg",
-    "failure_success_trajectory": "artifacts\\failure_success_trajectory.svg"
+    "csv": "artifacts/reward_progression.csv",
+    "json": "artifacts/reward_progression.json",
+    "svg": "artifacts/reward_progression.svg",
+    "ablation_no_actor_actions": "artifacts/ablation_no_actor_actions.json",
+    "heldout_drift_scenario": "artifacts/heldout_drift_scenario.json",
+    "world_model_flow": "artifacts/world_model_flow.svg",
+    "failure_success_trajectory": "artifacts/failure_success_trajectory.svg"
   },
   "ablation_no_actor_actions": {
     "description": "Enterprise task ablation comparing full policy against the same action program with actor-facing actions removed.",
@@ -180,26 +180,26 @@
       "resolve_alert"
     ],
     "full_policy": {
-      "average_score": 0.667976,
+      "average_score": 0.807976,
       "std_score": 0.058069,
       "task_scores": {
-        "task_enterprise_orchestration": 0.667976
+        "task_enterprise_orchestration": 0.807976
       }
     },
     "no_actor_actions": {
-      "average_score": 0.284008,
+      "average_score": 0.424008,
       "std_score": 0.046308,
       "task_scores": {
-        "task_enterprise_orchestration": 0.284008
+        "task_enterprise_orchestration": 0.424008
       }
     },
     "delta_full_minus_ablation": 0.383968
   },
   "heldout_drift_scenario": {
-    "average_score": 0.691048,
+    "average_score": 0.831048,
     "std_score": 0.055686,
     "task_scores": {
-      "task_enterprise_orchestration": 0.691048
+      "task_enterprise_orchestration": 0.831048
     }
   }
 }

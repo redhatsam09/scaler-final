@@ -1,9 +1,12 @@
 import json
+import os
+import threading
+import time
 import uuid
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional
 from src.environment import DataCleaningEnv, DEFAULT_ENV_SEED
 from src.models import Action
@@ -14,22 +17,38 @@ from src.graders import (
     EnterpriseOrchestrationGrader,
 )
 
+SESSION_TTL_SECONDS = max(60, int(os.getenv("SESSION_TTL_SECONDS", "3600")))
+MAX_ACTIVE_SESSIONS = max(1, int(os.getenv("MAX_ACTIVE_SESSIONS", "200")))
+MAX_REASONING_LENGTH = max(128, int(os.getenv("MAX_REASONING_LENGTH", "4000")))
+
+default_origins = ["https://huggingface.co"]
+extra_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+ALLOWED_ORIGINS = list(dict.fromkeys(default_origins + extra_origins))
+
 app = FastAPI(title="Enterprise Orchestration Environment")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.hf\.space",
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
 environments: Dict[str, DataCleaningEnv] = {}
+session_last_seen: Dict[str, float] = {}
+session_locks: Dict[str, threading.Lock] = {}
+registry_lock = threading.Lock()
 
 
 class StepRequest(BaseModel):
     session_id: Optional[str] = None
-    action: Dict[str, Any]
+    action: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ResetResponse(BaseModel):
@@ -59,13 +78,32 @@ class GradeResponse(BaseModel):
     score: float
 
 
+class CloseRequest(BaseModel):
+    session_id: str
+
+
+class CloseResponse(BaseModel):
+    session_id: str
+    closed: bool
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    _cleanup_expired_sessions()
+    with registry_lock:
+        active_sessions = len(environments)
+    return {
+        "status": "ok",
+        "active_sessions": active_sessions,
+        "session_ttl_seconds": SESSION_TTL_SECONDS,
+    }
 
 
 @app.get("/")
 async def root():
+    _cleanup_expired_sessions()
+    with registry_lock:
+        active_sessions = len(environments)
     return {
         "name": "Enterprise Orchestration Environment",
         "version": "2.0.0",
@@ -81,6 +119,9 @@ async def root():
             "economic_budgets", "curriculum_difficulty", "stochastic_delegation",
             "natural_language_observations", "process_rewards",
         ],
+        "session_ttl_seconds": SESSION_TTL_SECONDS,
+        "max_active_sessions": MAX_ACTIVE_SESSIONS,
+        "active_sessions": active_sessions,
     }
 
 
@@ -138,16 +179,67 @@ async def _extract_payload(request: Request) -> Dict[str, Any]:
 def _resolve_runtime_session(session_id: Optional[str]) -> str:
     if isinstance(session_id, str) and session_id.strip():
         return session_id.strip()
-    if len(environments) == 1:
-        return next(iter(environments))
+    with registry_lock:
+        if len(environments) == 1:
+            return next(iter(environments))
     raise ValueError("Missing session_id. Provide session_id in body/query/header x-session-id.")
 
 
 def _get_env_by_session(session_id: str) -> DataCleaningEnv:
-    env = environments.get(session_id)
+    with registry_lock:
+        env = environments.get(session_id)
+        if env is not None:
+            session_last_seen[session_id] = time.time()
     if env is None:
-        raise ValueError(f"Unknown session_id: {session_id}. Call /reset first.")
+        raise KeyError(f"Unknown session_id: {session_id}. Call /reset first.")
     return env
+
+
+def _get_session_lock(session_id: str) -> threading.Lock:
+    with registry_lock:
+        lock = session_locks.get(session_id)
+        if lock is None:
+            lock = threading.Lock()
+            session_locks[session_id] = lock
+        return lock
+
+
+def _cleanup_expired_sessions() -> int:
+    now = time.time()
+    expired_ids: list[str] = []
+    with registry_lock:
+        for session_id, last_seen in list(session_last_seen.items()):
+            if now - last_seen > SESSION_TTL_SECONDS:
+                expired_ids.append(session_id)
+        for session_id in expired_ids:
+            environments.pop(session_id, None)
+            session_last_seen.pop(session_id, None)
+            session_locks.pop(session_id, None)
+    return len(expired_ids)
+
+
+def _create_or_get_env(session_id: str, seed: Optional[int]) -> DataCleaningEnv:
+    with registry_lock:
+        env = environments.get(session_id)
+        if env is None:
+            if len(environments) >= MAX_ACTIVE_SESSIONS:
+                raise RuntimeError(
+                    f"Maximum active sessions reached ({MAX_ACTIVE_SESSIONS}). Close idle sessions and retry."
+                )
+            env = DataCleaningEnv(seed=seed if seed is not None else DEFAULT_ENV_SEED)
+            environments[session_id] = env
+            session_locks[session_id] = threading.Lock()
+        session_last_seen[session_id] = time.time()
+        return env
+
+
+def _close_session(session_id: str) -> bool:
+    with registry_lock:
+        existed = session_id in environments
+        environments.pop(session_id, None)
+        session_last_seen.pop(session_id, None)
+        session_locks.pop(session_id, None)
+    return existed
 
 
 def _obs_to_dict(observation) -> Dict[str, Any]:
@@ -177,6 +269,7 @@ def _obs_to_dict(observation) -> Dict[str, Any]:
 @app.post("/reset", response_model=ResetResponse)
 @app.post("/reset/", response_model=ResetResponse)
 async def reset(request: Request):
+    _cleanup_expired_sessions()
     try:
         payload = await _extract_payload(request)
         session_id = _extract_session_id(request, payload) or str(uuid.uuid4())
@@ -192,12 +285,11 @@ async def reset(request: Request):
         if seed is None:
             seed = _coerce_seed(payload.get("seed"))
 
-        env = environments.get(session_id)
-        if env is None:
-            env = DataCleaningEnv(seed=seed if seed is not None else DEFAULT_ENV_SEED)
-            environments[session_id] = env
+        env = _create_or_get_env(session_id, seed)
+        session_lock = _get_session_lock(session_id)
 
-        observation = env.reset(task_id=task_id, seed=seed, difficulty=difficulty)
+        with session_lock:
+            observation = env.reset(task_id=task_id, seed=seed, difficulty=difficulty)
 
         return ResetResponse(
             session_id=session_id,
@@ -206,20 +298,34 @@ async def reset(request: Request):
             step=observation.step_count,
             seed=env.seed,
         )
+    except HTTPException:
+        raise
+    except RuntimeError as e:
+        raise HTTPException(status_code=429, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/step", response_model=StepResponse)
 async def step(request: StepRequest):
+    _cleanup_expired_sessions()
     try:
         session_id = _resolve_runtime_session(request.session_id)
-        env = _get_env_by_session(session_id)
-        if env.current_episode is None:
-            raise ValueError("Environment not initialized. Call /reset first.")
+        action_payload = request.action if isinstance(request.action, dict) else {}
+        reasoning_text = str(action_payload.get("reasoning", ""))
+        if len(reasoning_text) > MAX_REASONING_LENGTH:
+            raise ValueError(f"Reasoning exceeds max length ({MAX_REASONING_LENGTH} chars).")
 
-        action = Action(**request.action)
-        observation, reward, done, info = env.step(action)
+        session_lock = _get_session_lock(session_id)
+        with session_lock:
+            env = _get_env_by_session(session_id)
+            if env.current_episode is None:
+                raise ValueError("Environment not initialized. Call /reset first.")
+
+            action = Action(**action_payload)
+            observation, reward, done, info = env.step(action)
 
         return StepResponse(
             session_id=session_id,
@@ -228,27 +334,53 @@ async def step(request: StepRequest):
             done=done,
             info=info
         )
+    except HTTPException:
+        raise
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/state", response_model=StateResponse)
 async def state(session_id: Optional[str] = None):
+    _cleanup_expired_sessions()
     try:
         resolved_session_id = _resolve_runtime_session(session_id)
-        env = _get_env_by_session(resolved_session_id)
-        return StateResponse(session_id=resolved_session_id, state=env.state())
+        session_lock = _get_session_lock(resolved_session_id)
+        with session_lock:
+            env = _get_env_by_session(resolved_session_id)
+            return StateResponse(session_id=resolved_session_id, state=env.state())
+    except HTTPException:
+        raise
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/grade", response_model=GradeResponse)
 async def grade(task_id: str = "task_missing_values", session_id: Optional[str] = None):
+    _cleanup_expired_sessions()
     try:
         resolved_session_id = _resolve_runtime_session(session_id)
-        env = _get_env_by_session(resolved_session_id)
-        if env.current_episode is None or env.current_episode.task_id != task_id:
-            raise ValueError("Episode not matching requested task")
+        session_lock = _get_session_lock(resolved_session_id)
+        with session_lock:
+            env = _get_env_by_session(resolved_session_id)
+            if env.current_episode is None:
+                raise ValueError("Environment not initialized. Call /reset first.")
+            if env.current_episode.task_id != task_id:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        f"Task mismatch: active episode is '{env.current_episode.task_id}' "
+                        f"but grade requested for '{task_id}'."
+                    ),
+                )
 
         graders = {
             "task_missing_values": MissingValuesGrader,
@@ -263,8 +395,27 @@ async def grade(task_id: str = "task_missing_values", session_id: Optional[str] 
 
         score = grader_class.grade(env.current_episode)
         return GradeResponse(session_id=resolved_session_id, task_id=task_id, score=score)
+    except HTTPException:
+        raise
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/close", response_model=CloseResponse)
+async def close_session(request: CloseRequest):
+    _cleanup_expired_sessions()
+    session_id = request.session_id.strip()
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id cannot be empty.")
+
+    closed = _close_session(session_id)
+    if not closed:
+        raise HTTPException(status_code=404, detail=f"Unknown session_id: {session_id}")
+    return CloseResponse(session_id=session_id, closed=True)
 
 
 # ---- Gradio Interactive Demo ----
@@ -364,7 +515,7 @@ def _build_gradio_demo():
 """
         return output, ""
 
-    with gr.Blocks(title="Enterprise Orchestration Environment", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="Enterprise Orchestration Environment") as demo:
         gr.Markdown("""# 🏢 Enterprise Orchestration Environment
 *Multi-app RL environment with schema drift, actor conflicts, deceptive oversight, and economic budgets*
         """)

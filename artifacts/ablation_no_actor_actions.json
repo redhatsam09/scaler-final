@@ -7,17 +7,17 @@
     "resolve_alert"
   ],
   "full_policy": {
-    "average_score": 0.667976,
+    "average_score": 0.807976,
     "std_score": 0.058069,
     "task_scores": {
-      "task_enterprise_orchestration": 0.667976
+      "task_enterprise_orchestration": 0.807976
     }
   },
   "no_actor_actions": {
-    "average_score": 0.284008,
+    "average_score": 0.424008,
     "std_score": 0.046308,
     "task_scores": {
-      "task_enterprise_orchestration": 0.284008
+      "task_enterprise_orchestration": 0.424008
     }
   },
   "delta_full_minus_ablation": 0.383968
