@@ -59,9 +59,16 @@ class GradeResponse(BaseModel):
     score: float
 
 
+SESSION_TTL_SECONDS = 3600
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "active_sessions": len(environments),
+        "session_ttl_seconds": SESSION_TTL_SECONDS,
+    }
 
 
 @app.get("/")
@@ -263,6 +270,19 @@ async def grade(task_id: str = "task_missing_values", session_id: Optional[str] 
 
         score = grader_class.grade(env.current_episode)
         return GradeResponse(session_id=resolved_session_id, task_id=task_id, score=score)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/close")
+async def close(session_id: Optional[str] = None):
+    """Close a session and free its resources."""
+    try:
+        resolved_session_id = _resolve_runtime_session(session_id)
+        env = environments.pop(resolved_session_id, None)
+        if env is None:
+            raise ValueError(f"Unknown session_id: {resolved_session_id}")
+        return {"status": "closed", "session_id": resolved_session_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
