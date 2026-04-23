@@ -163,13 +163,13 @@
     }
   ],
   "reward_progression_artifacts": {
-    "csv": "artifacts/reward_progression.csv",
-    "json": "artifacts/reward_progression.json",
-    "svg": "artifacts/reward_progression.svg",
-    "ablation_no_actor_actions": "artifacts/ablation_no_actor_actions.json",
-    "heldout_drift_scenario": "artifacts/heldout_drift_scenario.json",
-    "world_model_flow": "artifacts/world_model_flow.svg",
-    "failure_success_trajectory": "artifacts/failure_success_trajectory.svg"
+    "csv": "artifacts\\reward_progression.csv",
+    "json": "artifacts\\reward_progression.json",
+    "svg": "artifacts\\reward_progression.svg",
+    "ablation_no_actor_actions": "artifacts\\ablation_no_actor_actions.json",
+    "heldout_drift_scenario": "artifacts\\heldout_drift_scenario.json",
+    "world_model_flow": "artifacts\\world_model_flow.svg",
+    "failure_success_trajectory": "artifacts\\failure_success_trajectory.svg"
   },
   "ablation_no_actor_actions": {
     "description": "Enterprise task ablation comparing full policy against the same action program with actor-facing actions removed.",

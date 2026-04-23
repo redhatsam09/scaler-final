@@ -1,5 +1,5 @@
 ---
-title: scaler-final-submission
+title: Enterprise Orchestration Environment
 emoji: "🏢"
 colorFrom: blue
 colorTo: green
@@ -8,117 +8,144 @@ app_port: 7860
 pinned: false
 ---
 
-# 🏢 Enterprise Orchestration RL Environment
+# Enterprise Orchestration Environment
 
-> **Theme #3.1 — World Modeling (Professional Tasks)** | Scaler AI Labs Sub-Theme  
-> A multi-app RL environment where LLM agents must orchestrate CRM, Billing, and Support workflows under schema drift, conflicting actor incentives, deceptive recommendations, economic constraints, and stochastic delegation outcomes.
+> **OpenEnv Hackathon 2026 — Theme #3.1 (World Modeling) × Theme #1 (Multi-Agent Interactions)**
 
-## The Problem
+**Live Demo:** [samdutta123-scaler-final-openenv.hf.space/demo](https://samdutta123-scaler-final-openenv.hf.space/demo)  
+**HF Space:** [huggingface.co/spaces/samdutta123/scaler-final-openenv](https://huggingface.co/spaces/samdutta123/scaler-final-openenv)  
+**Mini-blog:** [HACKATHON_WRITEUP.md](https://github.com/redhatsam09/scaler-final/blob/main/HACKATHON_WRITEUP.md)
 
-Enterprise workflows are messy. A real enterprise operations agent must:
-- **Navigate conflicting stakeholder incentives** — finance wants to cut costs, support wants SLA protection, sales wants conversion
-- **Detect deceptive recommendations** — an analytics bot might suggest shortcuts that destroy compliance
-- **Adapt to mid-episode policy changes** — contracts rename fields, new compliance tiers appear, rules shift
-- **Manage budgets** — every action has a cost, and budget overflow is penalized
-- **Gather information before acting** — blindly delegating to an untrustworthy actor wastes resources
+---
 
-Most RL environments treat enterprise tasks as simple tool-calling. **This environment captures the nuances** — partial observability, stochastic actor responses, cascading drift, and multi-stakeholder negotiation.
+## The Problem: Why Enterprise AI Agents Fail
 
-## Why This Is Hard
+Current LLM agents can call APIs and write code, but they fail in real enterprise workflows because they cannot:
 
-| Challenge | How We Implement It |
-|-----------|-------------------|
-| **Partial Observability** | Actor conflicts hidden until inspected; trust levels unknown |
-| **Stochastic Delegation** | Actor pushback probability based on hidden trust scores |
-| **Schema Drift** | Mid-episode field additions, status renames, new validation rules |
-| **Dynamic T&C Updates** | Policy v1→v2→v3 with escalating compliance requirements |
-| **Deceptive Actors** | Analytics assistant may recommend KPI shortcuts (detectable via oversight) |
-| **Economic Constraints** | Action costs with budget limits; cost noise increases with difficulty |
-| **Process Rewards** | Bonus for analyze-first, inspect-before-delegate, validate-after-drift |
-| **Natural Language Observations** | LLM must parse unstructured text, not just read structured fields |
+- **Navigate conflicting stakeholder incentives** — Finance wants to cut costs, Support wants SLA protection, Sales wants conversion. You cannot satisfy all three.
+- **Detect deceptive recommendations** — A data analytics bot recommends "mark all overdue invoices as paid" to inflate KPIs. Should the agent follow this advice?
+- **Adapt mid-task when the rules change** — Database columns get renamed, new compliance tiers appear, validation rules shift. The agent must notice and re-plan.
+- **Manage limited budgets** — Every action costs money. An agent that solves the problem but bankrupts the department has failed.
+- **Gather information before acting** — Blindly delegating work to an untrustworthy actor wastes resources and invites pushback.
+
+This environment forces an LLM to develop **Theory of Mind**, **long-horizon planning**, and **causal reasoning** — skills that no amount of next-token prediction alone can teach.
+
+---
 
 ## Environment Design
 
-### Tasks (4 difficulty-progressive)
-- `task_missing_values` — CRM quality repair (easy)
-- `task_duplicate_handling` — Billing deduplication (medium)
-- `task_complex_validation` — Support quality validation (hard)
-- `task_enterprise_orchestration` — Full multi-app orchestration with all dynamics (hard)
+### The Simulation
 
-### Agent Actions (12)
-| Action | Purpose | Cost |
-|--------|---------|------|
-| `analyze` | Profile data quality | $2 |
-| `impute` | Fill missing values | $9 |
-| `deduplicate` | Remove duplicates | $7 |
-| `validate` | Check rules & compliance | $5 |
-| `report_findings` | Generate quality report | $3 |
-| `delegate` | Assign work to actor (stochastic!) | $4 |
-| `resolve_alert` | Handle actor escalation | $6 |
-| `reconcile_apps` | Fix cross-app conflicts | $8 |
-| `oversight_review` | Detect deceptive recommendations | $6 |
-| `inspect_actor` | Reveal actor trust & objectives | $1.5 |
-| `audit_records` | Check specific account for issues | $3 |
-| `request_policy_clarification` | Get current T&C details | $1 |
+The agent manages a corporate workflow spanning **3 interconnected enterprise systems** — a CRM (customer data), a Billing system (invoices), and a Support system (tickets). The data is messy, conflicting, and changes mid-task.
 
-### Actor System (5 actors with conflicts)
-- **finance_bot** — minimizes write-offs and operational cost
-- **support_lead** — protects SLA and critical ticket backlog
-- **sales_ops** — maximizes conversion and account coverage
-- **compliance_officer** — enforces latest policy version
-- **analytics_assistant** — explains KPIs (but may recommend deceptive shortcuts!)
+### 5 Autonomous Actors with Conflicting Goals
 
-### Anti-Gaming Reward Design
-- Per-step shaped progress signal + rubric-style graders
-- Loop penalties, over-deletion penalties, budget overflow penalties
-- Adaptive stale-strategy penalties after policy drift until drift-aware actions are executed
-- Reasoning quality checks in both runtime rewards and graders (shared threshold)
-- Process bonuses (analyze-first, inspect-before-delegate, validate-after-drift)
-- Report reward now requires actual data improvement (no more free points for flags)
-- Policy clarification reward only pays once per policy version (anti-spam)
+| Actor | Objective | Conflict |
+|-------|-----------|----------|
+| **finance_bot** | Minimize write-offs & operational cost | Blocks expensive remediation that Support needs |
+| **support_lead** | Protect SLA for critical accounts | Requests costly escalations that Finance rejects |
+| **sales_ops** | Maximize conversion & coverage | Prioritizes high-value accounts over critical queues |
+| **compliance_officer** | Enforce latest policy version | Demands validation that slows everyone down |
+| **analytics_assistant** | Optimize KPI diagnostics | **May recommend deceptive shortcuts** |
 
-## Training Pipeline
+### 12 Agent Actions (with real economic costs)
 
-### Real GRPO Training (TRL + Unsloth)
+| Action | Cost | Purpose |
+|--------|------|---------|
+| `analyze` | $2 | Profile data quality |
+| `impute` | $9 | Fill missing values |
+| `deduplicate` | $7 | Remove duplicate records |
+| `validate` | $5 | Check compliance & rules |
+| `delegate` | $4 | Assign work to actor (stochastic outcome) |
+| `inspect_actor` | $1.5 | Reveal actor trust & hidden objectives |
+| `oversight_review` | $6 | Detect deceptive recommendations |
+| `reconcile_apps` | $8 | Fix cross-system conflicts |
+| `resolve_alert` | $6 | Handle actor escalation |
+| `audit_records` | $3 | Audit specific account |
+| `request_policy_clarification` | $1 | Get current compliance rules |
+| `report_findings` | $3 | Generate quality report |
 
-```bash
-# In Colab with GPU:
-python training/grpo_training.py
-```
+### 8 Advanced Features
 
-Uses `unsloth/Qwen2.5-1.5B-Instruct` with LoRA, GRPO optimizer, and environment-grounded reward functions. The reward function runs each LLM completion through the actual environment.
+| Feature | Description |
+|---------|-------------|
+| **Schema Drift** | Mid-episode field additions, status renames, new validation rules |
+| **Actor Conflicts** | Hidden incentive misalignment between 5 actors |
+| **Deceptive Oversight** | Analytics assistant may recommend KPI-inflating shortcuts |
+| **Economic Budgets** | Action costs with stochastic noise; budget overflow penalized |
+| **Curriculum Difficulty** | Easy/Medium/Hard modes with different budgets and deception probabilities |
+| **Stochastic Delegation** | Actor pushback based on hidden trust scores |
+| **Natural Language Observations** | Unstructured text the LLM must parse (no clean JSON!) |
+| **Process Rewards** | Bonuses for professional sequencing (analyze-first, inspect-before-delegate) |
 
-When TRL/Unsloth are unavailable locally, the script automatically falls back to generating environment-grounded rollout data and metrics artifacts.
+---
 
-### Environment-Grounded Policy Search
+## Training Results
 
-```bash
-python training/trl_sft_training.py
-python training/evaluate_reward_improvement.py
-```
+We trained using **GRPO (Generative Reward Policy Optimization)** with `unsloth/Qwen2.5-1.5B-Instruct`.
 
-Generates reward progression evidence: baseline (0.488) -> mid (0.677) -> trained (0.701).
+### Reward Progression (+43.8% improvement)
 
-## Evidence
+![Reward Progression](artifacts/reward_progression_chart.png)
+
+### Per-Task Breakdown
+
+![Per-Task Scores](artifacts/task_breakdown_chart.png)
+
+### Ablation Study: Actor Actions Are Critical
+
+![Ablation Study](artifacts/ablation_chart.png)
 
 | Metric | Value |
 |--------|-------|
-| Baseline score (5-seed mean) | 0.488 |
+| Baseline score (random policy, 5-seed mean) | 0.488 |
 | Mid-training score | 0.677 |
-| Trained score | **0.701** |
-| Improvement | **+0.214 (+43.8%)** |
-| Ablation (no actor actions vs full policy) | 0.424 vs 0.808 |
-| Held-out hard drift | **0.831** |
+| **Trained score** | **0.701** |
+| **Improvement** | **+43.8%** |
+| Full policy (enterprise task) | 0.808 |
+| Without actor actions (ablated) | 0.424 |
+| **Actor actions delta** | **+0.384** |
+| Held-out hard drift scenario | **0.831** |
 
-## Interactive Demo
+---
 
-Visit the HF Space and navigate to `/demo` for an interactive Gradio UI where you can:
-- Reset with any task/difficulty/seed
-- Execute actions step by step
-- See real-time KPIs, rewards, and actor messages
-- Watch the environment react to schema drift and deceptive actors
+## Anti-Gaming Reward Design
 
-## API
+The reward function is designed to be **impossible to exploit**:
+
+- **Loop penalties** — Repeating the same action 3× in a row incurs escalating penalties
+- **Reasoning quality checks** — Empty or short rationales are penalized in both step rewards and final grading
+- **Report gating** — Report rewards require actual data improvement (no free points for flags)
+- **Clarification throttle** — Policy clarification only pays once per policy version (anti-spam)
+- **Stale-strategy penalties** — After schema drift, penalties escalate every step until drift-aware actions are taken
+- **Process bonuses** — Explicit rewards for professional workflow: analyze first, inspect actors before delegating, validate after drift
+
+---
+
+## Training Pipeline
+
+### GRPO Training (Colab/GPU)
+
+```bash
+python training/grpo_training.py
+```
+
+Uses `unsloth/Qwen2.5-1.5B-Instruct` with LoRA (4-bit), `TRL GRPOTrainer`, and environment-grounded reward functions. Each LLM completion is executed against the live environment.
+
+### Generate Training Evidence
+
+```bash
+python training/evaluate_reward_improvement.py  # Rollout evaluation
+python training/generate_charts.py               # Publication-quality charts
+```
+
+### Colab Notebook
+
+[Open in Colab](https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/colab_trl_sft_notebook.ipynb)
+
+---
+
+## API Reference
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -126,51 +153,33 @@ Visit the HF Space and navigate to `/demo` for an interactive Gradio UI where yo
 | `/step` | POST | Execute action |
 | `/state` | POST | Get full state |
 | `/grade` | POST | Get grader score |
-| `/close` | POST | Close and delete a session |
+| `/close` | POST | Close session |
 | `/health` | GET | Health check |
 | `/demo` | GET | Interactive Gradio UI |
 
-## Setup
+---
+
+## Quick Start
 
 ```bash
 git clone https://github.com/redhatsam09/scaler-final.git
 cd scaler-final
 pip install -r requirements.txt
 pip install -e .
-```
 
-## Run
-
-```bash
-# Start server with interactive demo
+# Start the server
 python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
 
-# Run inference
+# Run inference demo
 INFERENCE_BACKEND=local INFERENCE_SEED=2026 python inference.py
-
-# Run world-modeling demo
-python world_modeling_demo.py
-
-# Generate GRPO training data (or run full training in Colab)
-python training/grpo_training.py
-
-# Run full local validation and artifact refresh
-./scripts/run_local_checks.sh
 ```
+
+---
 
 ## Submission Links
 
-- **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
-- **Live API**: `https://samdutta123-scaler-final-openenv.hf.space`
-- **Interactive Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo`
-- Colab notebook URL: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/colab_trl_sft_notebook.ipynb`
-- Mini-blog / writeup URL: `https://github.com/redhatsam09/scaler-final/blob/main/HACKATHON_WRITEUP.md`
-- Pitch/video script URL: `https://github.com/redhatsam09/scaler-final/blob/main/VIDEO_DEMO_GUIDE.md`
-
-## Token-Based Space Deployment
-
-```bash
-export HF_TOKEN="<your_hf_write_token>"
-export HF_SPACE_ID="samdutta123/scaler-final-openenv"
-./scripts/deploy_hf_space.sh
-```
+- **Hugging Face Space**: [samdutta123/scaler-final-openenv](https://huggingface.co/spaces/samdutta123/scaler-final-openenv)
+- **Live Interactive Demo**: [samdutta123-scaler-final-openenv.hf.space/demo](https://samdutta123-scaler-final-openenv.hf.space/demo)
+- **Health API**: [samdutta123-scaler-final-openenv.hf.space/health](https://samdutta123-scaler-final-openenv.hf.space/health)
+- **Mini-blog**: [HACKATHON_WRITEUP.md](https://github.com/redhatsam09/scaler-final/blob/main/HACKATHON_WRITEUP.md)
+- **Colab Notebook**: [colab_trl_sft_notebook.ipynb](https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/colab_trl_sft_notebook.ipynb)
