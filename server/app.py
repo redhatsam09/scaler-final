@@ -523,7 +523,8 @@ def _build_gradio_demo():
     .dark .gr-button-secondary { background-color: #64748b; }
     """
 
-    with gr.Blocks(title="Enterprise Orchestration Console", css=custom_css) as demo:
+    with gr.Blocks(title="Enterprise Orchestration Console") as demo:
+        gr.HTML(f"<style>{custom_css}</style>")
         gr.Markdown("# Enterprise Orchestration Console")
         gr.Markdown("*Professional LLM Reinforcement Learning Environment (Theme: World Modeling & Multi-Agent)*")
 
@@ -567,12 +568,19 @@ def _build_gradio_demo():
                 """)
                 with gr.Row():
                     try:
-                        training_curve_path = str(Path(__file__).resolve().parents[1] / "artifacts" / "training_curve.svg")
-                        reward_progression_path = str(Path(__file__).resolve().parents[1] / "artifacts" / "reward_progression.svg")
-                        gr.Image(value=training_curve_path, type="filepath", label="Training Curve", show_download_button=False)
-                        gr.Image(value=reward_progression_path, type="filepath", label="Reward Progression", show_download_button=False)
-                    except Exception:
-                        gr.Markdown("*(Artifacts not found locally. Please run `training/evaluate_reward_improvement.py` to generate the plots.)*")
+                        import os
+                        tc_path = "artifacts/training_curve.svg"
+                        rp_path = "artifacts/reward_progression.svg"
+                        
+                        if not os.path.exists(tc_path):
+                            # Fallback if running from a different working directory
+                            tc_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), tc_path)
+                            rp_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), rp_path)
+
+                        gr.Image(value=tc_path, type="filepath", label="Training Curve", show_download_button=False)
+                        gr.Image(value=rp_path, type="filepath", label="Reward Progression", show_download_button=False)
+                    except Exception as e:
+                        gr.Markdown(f"*(Error loading artifacts: {e}. Please run `training/evaluate_reward_improvement.py` to generate the plots.)*")
 
     return demo
 
