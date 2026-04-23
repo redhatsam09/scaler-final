@@ -16,7 +16,7 @@ dependencies = [
     "pandas==2.2.3",
     "numpy==2.2.4",
     "python-multipart==0.0.20",
-    "openenv-core>=1.0.0,<2.0.0",
+    "openenv-core>=0.2.0",
     "gradio>=5.0.0",
     "matplotlib>=3.9.0",
 ]
