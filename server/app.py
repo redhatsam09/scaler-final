@@ -421,7 +421,7 @@ async def close_session(request: CloseRequest):
 # ---- Gradio Interactive Demo ----
 
 def _build_gradio_demo():
-    \"\"\"Build Gradio UI for judges to interact with the environment.\"\"\"
+    """Build Gradio UI for judges to interact with the environment."""
     try:
         import gradio as gr
         from pathlib import Path
@@ -439,11 +439,11 @@ def _build_gradio_demo():
         demo_session["task_id"] = task_id
 
         state_text = obs.natural_language_observation
-        kpi_text = "\\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
-        actors = "\\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages) if obs.actor_messages else "- No active communications"
+        kpi_text = "\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
+        urgency = "\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
+        actors = "\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages) if obs.actor_messages else "- No active communications"
 
-        output = f\"\"\"### System Initialized
+        output = f"""### System Initialized
 **Task:** {task_id} | **Difficulty:** {difficulty} | **Seed:** {seed_val} | **Dataset:** {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols
 
 **Observation State:**
@@ -459,7 +459,7 @@ def _build_gradio_demo():
 {actors}
 
 **Available Actions:** {', '.join(obs.available_actions)}
-\"\"\"
+"""
         return output, ""
 
     def step_env(action_type, target_cols, params_json, reasoning):
@@ -477,10 +477,10 @@ def _build_gradio_demo():
         demo_session["obs"] = obs
         demo_session["history"].append({"action": action_type, "reward": reward.value})
 
-        kpi_text = "\\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
-        actors = "\\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "- No active communications"
-        components = "\\n".join(f"- {k}: {v:.4f}" for k, v in info.get("components", {}).items())
+        kpi_text = "\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
+        urgency = "\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
+        actors = "\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "- No active communications"
+        components = "\n".join(f"- {k}: {v:.4f}" for k, v in info.get("components", {}).items())
 
         graders = {
             "task_missing_values": MissingValuesGrader,
@@ -492,7 +492,7 @@ def _build_gradio_demo():
 
         history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
 
-        output = f\"\"\"### {'EPISODE TERMINATED' if done else f'Execution Step: {obs.step_count}'}
+        output = f"""### {'EPISODE TERMINATED' if done else f'Execution Step: {obs.step_count}'}
 **Action Processed:** {action_type} | **Step Reward:** {reward.value:.4f} | **Cumulative Grade:** {grade:.4f} | **Status:** {'Done' if done else 'Active'}
 
 **Observation State:**
@@ -511,17 +511,17 @@ def _build_gradio_demo():
 {actors}
 
 **Execution History:** {history_text}
-\"\"\"
+"""
         return output, ""
 
-    custom_css = \"\"\"
+    custom_css = """
     .gradio-container { font-family: 'Inter', sans-serif; }
     h1 { color: #1e293b; text-align: left; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
     .gr-button-primary { background-color: #0f172a; color: white; font-weight: 600; border-radius: 4px; }
     .gr-button-secondary { background-color: #334155; color: white; font-weight: 600; border-radius: 4px; }
     .dark .gr-button-primary { background-color: #3b82f6; }
     .dark .gr-button-secondary { background-color: #64748b; }
-    \"\"\"
+    """
 
     with gr.Blocks(title="Enterprise Orchestration Console", css=custom_css) as demo:
         gr.Markdown("# Enterprise Orchestration Console")
@@ -561,10 +561,10 @@ def _build_gradio_demo():
                 step_btn.click(step_env, inputs=[action_dd, cols_tb, params_tb, reason_tb], outputs=[output_md, error_md])
 
             with gr.TabItem("Training Evidence (GRPO)"):
-                gr.Markdown(\"\"\"
+                gr.Markdown("""
                 ### Reinforcement Learning Performance Metrics
                 The following artifacts demonstrate the progressive capability improvement of an LLM agent trained on this environment using Generative Reward Policy Optimization (GRPO).
-                \"\"\")
+                """)
                 with gr.Row():
                     try:
                         training_curve_path = str(Path(__file__).resolve().parents[1] / "artifacts" / "training_curve.svg")
