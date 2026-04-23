@@ -20,6 +20,13 @@ git push origin opus
 
 Use your target branch in place of `opus` if needed.
 
+If your Space is connected to GitHub `main`, promote your validated branch:
+
+```bash
+cd /workspaces/scaler-final
+git push origin opus:main
+```
+
 ## 3) Deploy to Hugging Face Space using token auth
 
 Required token scope: write access to the Space repository.
@@ -45,7 +52,12 @@ curl -sS https://samdutta123-scaler-final-openenv.hf.space/health
 curl -sS -X POST 'https://samdutta123-scaler-final-openenv.hf.space/reset' \
 	-H 'Content-Type: application/json' \
 	-d '{"task_id":"task_enterprise_orchestration","seed":2026}'
+curl -sS https://samdutta123-scaler-final-openenv.hf.space/openapi.json | grep '"/close"'
 ```
+
+Expected signals after the latest deployment:
+- `/health` includes `active_sessions` and `session_ttl_seconds`
+- OpenAPI includes `/close`
 
 ## 5) Final README links for submission
 

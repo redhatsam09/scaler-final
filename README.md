@@ -163,9 +163,9 @@ python training/grpo_training.py
 - **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
 - **Live API**: `https://samdutta123-scaler-final-openenv.hf.space`
 - **Interactive Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo`
-- Colab notebook URL: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/opus/training/colab_trl_sft_notebook.ipynb`
-- Mini-blog / writeup URL: `https://github.com/redhatsam09/scaler-final/blob/opus/HACKATHON_WRITEUP.md`
-- Pitch/video script URL: `https://github.com/redhatsam09/scaler-final/blob/opus/VIDEO_DEMO_GUIDE.md`
+- Colab notebook URL: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/colab_trl_sft_notebook.ipynb`
+- Mini-blog / writeup URL: `https://github.com/redhatsam09/scaler-final/blob/main/HACKATHON_WRITEUP.md`
+- Pitch/video script URL: `https://github.com/redhatsam09/scaler-final/blob/main/VIDEO_DEMO_GUIDE.md`
 
 ## Token-Based Space Deployment
 
