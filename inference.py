@@ -71,6 +71,8 @@ def extract_action(response_text: str) -> Optional[Action]:
     try:
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if not json_match:
+            if response_text.strip():
+                emit("PARSE_ERROR", reason="no_json_block")
             return None
         
         action_data = json.loads(json_match.group())
@@ -81,7 +83,8 @@ def extract_action(response_text: str) -> Optional[Action]:
             parameters=action_data.get('parameters', {}),
             reasoning=action_data.get('reasoning', '')
         )
-    except (json.JSONDecodeError, KeyError, ValueError):
+    except (json.JSONDecodeError, KeyError, ValueError) as exc:
+        emit("PARSE_ERROR", reason=exc.__class__.__name__)
         return None
 
 

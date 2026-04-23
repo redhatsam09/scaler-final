@@ -1,4 +1,4 @@
-from src.environment import EpisodeState
+from src.environment import EpisodeState, REASONING_MIN_CHARS
 
 
 MIN_TASK_SCORE = 0.01
@@ -99,8 +99,8 @@ def _process_bonus(episode_state: EpisodeState) -> float:
 def _reasoning_quality_penalty(episode_state: EpisodeState) -> float:
     penalty = 0.0
     for action in episode_state.actions_taken:
-        reasoning = action.get("parameters", {}).get("reasoning", "") or ""
-        if isinstance(reasoning, str) and len(reasoning.strip()) < 5:
+        reasoning = action.get("reasoning", "") or ""
+        if isinstance(reasoning, str) and len(reasoning.strip()) < REASONING_MIN_CHARS:
             penalty += 0.01
     return min(0.1, penalty)
 

@@ -71,10 +71,11 @@ Most RL environments treat enterprise tasks as simple tool-calling. **This envir
 ### Anti-Gaming Reward Design
 - Per-step shaped progress signal + rubric-style graders
 - Loop penalties, over-deletion penalties, budget overflow penalties
-- Stale-strategy penalties after policy drift
-- Reasoning quality check (penalizes trivially short reasoning)
+- Adaptive stale-strategy penalties after policy drift until drift-aware actions are executed
+- Reasoning quality checks in both runtime rewards and graders (shared threshold)
 - Process bonuses (analyze-first, inspect-before-delegate, validate-after-drift)
 - Report reward now requires actual data improvement (no more free points for flags)
+- Policy clarification reward only pays once per policy version (anti-spam)
 
 ## Training Pipeline
 
@@ -87,6 +88,8 @@ python training/grpo_training.py
 
 Uses `unsloth/Qwen2.5-1.5B-Instruct` with LoRA, GRPO optimizer, and environment-grounded reward functions. The reward function runs each LLM completion through the actual environment.
 
+When TRL/Unsloth are unavailable locally, the script automatically falls back to generating environment-grounded rollout data and metrics artifacts.
+
 ### Environment-Grounded Policy Search
 
 ```bash
@@ -94,18 +97,18 @@ python training/trl_sft_training.py
 python training/evaluate_reward_improvement.py
 ```
 
-Generates reward progression evidence: baseline (0.436) → mid (0.631) → trained (0.742).
+Generates reward progression evidence: baseline (0.488) -> mid (0.677) -> trained (0.701).
 
 ## Evidence
 
 | Metric | Value |
 |--------|-------|
-| Baseline score (5-seed mean) | 0.436 |
-| Mid-training score | 0.631 |
-| Trained score | **0.742** |
-| Improvement | **+0.306 (+70%)** |
-| Ablation (no actor actions) | 0.404 vs 0.701 |
-| Held-out hard drift | 0.705 |
+| Baseline score (5-seed mean) | 0.488 |
+| Mid-training score | 0.677 |
+| Trained score | **0.701** |
+| Improvement | **+0.214 (+43.8%)** |
+| Ablation (no actor actions vs full policy) | 0.424 vs 0.808 |
+| Held-out hard drift | **0.831** |
 
 ## Interactive Demo
 
@@ -123,6 +126,7 @@ Visit the HF Space and navigate to `/demo` for an interactive Gradio UI where yo
 | `/step` | POST | Execute action |
 | `/state` | POST | Get full state |
 | `/grade` | POST | Get grader score |
+| `/close` | POST | Close and delete a session |
 | `/health` | GET | Health check |
 | `/demo` | GET | Interactive Gradio UI |
 
@@ -149,6 +153,9 @@ python world_modeling_demo.py
 
 # Generate GRPO training data (or run full training in Colab)
 python training/grpo_training.py
+
+# Run full local validation and artifact refresh
+./scripts/run_local_checks.sh
 ```
 
 ## Submission Links
@@ -156,8 +163,14 @@ python training/grpo_training.py
 - **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
 - **Live API**: `https://samdutta123-scaler-final-openenv.hf.space`
 - **Interactive Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo`
-- Colab notebook URL: `REPLACE_WITH_FINAL_COLAB_URL`
-- Mini-blog URL: `REPLACE_WITH_FINAL_BLOG_URL`
-- Mini-video URL (<2 min): `REPLACE_WITH_FINAL_VIDEO_URL`
+- Colab notebook URL: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/colab_trl_sft_notebook.ipynb`
+- Mini-blog / writeup URL: `https://github.com/redhatsam09/scaler-final/blob/main/HACKATHON_WRITEUP.md`
+- Pitch/video script URL: `https://github.com/redhatsam09/scaler-final/blob/main/VIDEO_DEMO_GUIDE.md`
 
-> Replace placeholders before final submission.
+## Token-Based Space Deployment
+
+```bash
+export HF_TOKEN="<your_hf_write_token>"
+export HF_SPACE_ID="samdutta123/scaler-final-openenv"
+./scripts/deploy_hf_space.sh
+```

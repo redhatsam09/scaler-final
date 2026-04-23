@@ -1,4 +1,5 @@
 import random
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -9,6 +10,14 @@ from src.models import Action, Observation, Reward
 
 
 DEFAULT_ENV_SEED = 42
+DEFAULT_EPISODE_TIMEOUT_SECONDS = 300
+REASONING_MIN_CHARS = 15
+
+DRIFT_AWARE_ACTIONS = {
+    "validate",
+    "oversight_review",
+    "reconcile_apps",
+}
 
 
 ACTOR_OBJECTIVES = {
@@ -24,6 +33,29 @@ ACTOR_CONFLICTS = {
     "sales_ops_vs_support_lead": "sales prioritizes high-conversion accounts; support prioritizes critical SLA queues.",
     "finance_bot_vs_support_lead": "finance minimizes operational spend; support requests costly escalations to protect SLA.",
     "analytics_assistant_vs_compliance_officer": "analytics may recommend KPI shortcuts; compliance requires explainable policy-safe changes.",
+}
+
+REWARD_WEIGHTS: Dict[str, float] = {
+    "analysis": 1.0,
+    "imputation": 1.0,
+    "deduplication": 1.0,
+    "validation": 1.0,
+    "reporting": 0.9,
+    "delegation": 0.9,
+    "alert_resolution": 0.9,
+    "reconciliation": 1.0,
+    "oversight": 1.0,
+    "inspection": 0.8,
+    "audit": 0.8,
+    "policy_clarification": 0.6,
+    "progress_signal": 1.3,
+    "economic_efficiency": 0.9,
+    "process_bonus": 1.1,
+    "weak_reasoning_penalty": 1.2,
+    "invalid_penalty": 1.4,
+    "loop_penalty": 1.2,
+    "stale_strategy_penalty": 1.2,
+    "budget_penalty": 1.2,
 }
 
 
@@ -60,6 +92,11 @@ class EpisodeState:
     policy_clarifications_requested: int = 0
     process_bonuses: Dict[str, bool] = field(default_factory=dict)
     delegation_pushbacks: Dict[str, str] = field(default_factory=dict)
+    episode_started_at: float = 0.0
+    last_updated_at: float = 0.0
+    timed_out: bool = False
+    drift_unhandled_since_step: Optional[int] = None
+    policy_clarified_versions: List[int] = field(default_factory=list)
 
 
 class DataCleaningEnv:
@@ -106,9 +143,14 @@ class DataCleaningEnv:
         "hard": {"max_steps": 80, "drift_step": 3, "deception_prob": 0.45, "budget": 90.0, "noise": 0.18},
     }
 
-    def __init__(self, seed: int = DEFAULT_ENV_SEED):
+    def __init__(
+        self,
+        seed: int = DEFAULT_ENV_SEED,
+        episode_timeout_seconds: int = DEFAULT_EPISODE_TIMEOUT_SECONDS,
+    ):
         self.current_episode: Optional[EpisodeState] = None
         self.max_steps = 60
+        self.episode_timeout_seconds = max(1, int(episode_timeout_seconds))
         self.default_seed = int(seed)
         self.seed = int(seed)
         random.seed(self.seed)
@@ -208,9 +250,11 @@ class DataCleaningEnv:
 
     def _select_template_name(self, task_id: str) -> str:
         mapped = self.TASK_TEMPLATE_MAP.get(task_id)
-        if mapped and mapped in self.dataset_templates:
-            return mapped
-        return self._rng.choice(list(self.dataset_templates.keys()))
+        if not mapped:
+            raise ValueError(f"Unknown task_id: {task_id}")
+        if mapped not in self.dataset_templates:
+            raise ValueError(f"Task template '{mapped}' not found for task_id '{task_id}'")
+        return mapped
 
     def _initial_kpis(self, dataset: pd.DataFrame, episode: EpisodeState) -> Dict[str, float]:
         rows = float(len(dataset))
@@ -265,6 +309,7 @@ class DataCleaningEnv:
         template_name = self._select_template_name(task_id)
         selected_template = self.dataset_templates[template_name]
         dataset = selected_template.copy(deep=True)
+        now = time.monotonic()
 
         episode = EpisodeState(
             dataset=dataset,
@@ -278,6 +323,8 @@ class DataCleaningEnv:
             actor_conflicts=dict(ACTOR_CONFLICTS),
             economic_budget=float(config["budget"]),
             latest_policy_step=int(config["drift_step"]),
+            episode_started_at=now,
+            last_updated_at=now,
         )
         self.max_steps = int(config["max_steps"])
 
@@ -317,12 +364,17 @@ class DataCleaningEnv:
 
         dataset = episode.dataset
         if "compliance_tier" not in dataset.columns:
-            dataset["compliance_tier"] = dataset["region"].map(
-                {"EU": "strict", "US": "standard", "APAC": "expanded"}
-            ).fillna("unknown")
-        dataset["invoice_status"] = dataset["invoice_status"].replace({"pending": "awaiting_payment"})
+            if "region" in dataset.columns:
+                dataset["compliance_tier"] = dataset["region"].map(
+                    {"EU": "strict", "US": "standard", "APAC": "expanded"}
+                ).fillna("unknown")
+            else:
+                dataset["compliance_tier"] = "unknown"
+        if "invoice_status" in dataset.columns:
+            dataset["invoice_status"] = dataset["invoice_status"].replace({"pending": "awaiting_payment"})
         episode.drift_active = True
         episode.policy_version = 2
+        episode.drift_unhandled_since_step = episode.step_count
         msg = (
             "Policy update v2: add compliance_tier checks; invoice_status 'pending' renamed to "
             "'awaiting_payment'; overdue + unresolved critical tickets now incur compliance risk."
@@ -343,6 +395,7 @@ class DataCleaningEnv:
             return
 
         episode.policy_version = 3
+        episode.drift_unhandled_since_step = episode.step_count
         notice = (
             "Policy update v3: high-risk EU accounts require both compliance_tier strict and "
             "resolved ticket status before invoice closure."
@@ -476,6 +529,9 @@ class DataCleaningEnv:
             signals.append(f"EPISODE ENDING: Only {steps_left} steps remaining")
         if ep.drift_active and not ep.process_bonuses.get("post_drift_validate"):
             signals.append("DRIFT UNHANDLED: Schema/policy drift detected but not yet validated")
+        timeout_remaining = max(0.0, self.episode_timeout_seconds - self._episode_elapsed_seconds())
+        if timeout_remaining <= 30:
+            signals.append(f"EPISODE TIMEOUT WARNING: {timeout_remaining:.1f}s remaining")
         return signals
 
     def _get_available_actions(self) -> list:
@@ -497,7 +553,7 @@ class DataCleaningEnv:
         if episode.task_id == "task_enterprise_orchestration":
             for key, val in episode.actor_conflicts.items():
                 actors_in_key = key.split("_vs_")
-                if any(a in episode.inspected_actors for parts in actors_in_key for a in [parts]):
+                if any(actor in episode.inspected_actors for actor in actors_in_key):
                     visible_conflicts[key] = val
                 elif self._rng.random() < 0.3:
                     visible_conflicts[key] = "Conflict detected but details unclear. Use inspect_actor to learn more."
@@ -526,9 +582,83 @@ class DataCleaningEnv:
             urgency_signals=self._get_urgency_signals(),
         )
 
+    def _episode_elapsed_seconds(self) -> float:
+        if not self.current_episode:
+            return 0.0
+        episode = self.current_episode
+        if episode.episode_started_at <= 0:
+            return 0.0
+        return max(0.0, time.monotonic() - episode.episode_started_at)
+
+    def _is_episode_timed_out(self) -> bool:
+        if not self.current_episode:
+            return False
+        episode = self.current_episode
+        if episode.timed_out:
+            return True
+        if self._episode_elapsed_seconds() > self.episode_timeout_seconds:
+            episode.timed_out = True
+            episode.last_updated_at = time.monotonic()
+            episode.actor_inbox.append("system: episode timed out before action execution")
+            return True
+        return False
+
+    def _aggregate_reward(self, components: Dict[str, float]) -> float:
+        if not components:
+            return 0.0
+        positive_sum = 0.0
+        positive_weight = 0.0
+        negative_sum = 0.0
+        negative_weight = 0.0
+
+        for component, value in components.items():
+            weight = float(REWARD_WEIGHTS.get(component, 1.0))
+            if value >= 0:
+                positive_sum += value * weight
+                positive_weight += weight
+            else:
+                negative_sum += abs(value) * weight
+                negative_weight += weight
+
+        positive_score = positive_sum / max(positive_weight, 1.0)
+        negative_score = negative_sum / max(negative_weight, 1.0)
+        raw_total = positive_score - negative_score
+        return min(1.0, max(0.0, raw_total))
+
     def step(self, action: Action) -> Tuple[Observation, Reward, bool, Dict[str, Any]]:
         if not self.current_episode:
             raise RuntimeError("Episode not initialized. Call reset() first.")
+
+        if self._is_episode_timed_out():
+            episode = self.current_episode
+            observation = self._get_observation()
+            timeout_info = {
+                "action_type": action.action_type,
+                "reasoning": action.reasoning,
+                "components": {"timeout_penalty": -1.0},
+                "messages": ["Penalty: episode timeout reached"],
+                "kpi_snapshot": dict(episode.kpis),
+                "drift_active": episode.drift_active,
+                "policy_version": episode.policy_version,
+                "difficulty": episode.difficulty,
+                "economic_status": self._economic_status(episode),
+                "timed_out": True,
+            }
+            reward = Reward(
+                value=0.0,
+                components={"timeout_penalty": -1.0},
+                message="Episode timeout reached",
+            )
+            return observation, reward, True, timeout_info
+
+        normalized_action_type = (action.action_type or "").strip().lower()
+        action = Action(
+            action_type=normalized_action_type,
+            target_columns=action.target_columns,
+            parameters=action.parameters,
+            reasoning=action.reasoning,
+        )
+
         episode = self.current_episode
         episode.step_count += 1
         episode.actions_taken.append(
@@ -536,6 +666,7 @@ class DataCleaningEnv:
                 "action_type": action.action_type,
                 "target_columns": action.target_columns,
                 "parameters": action.parameters,
+                "reasoning": action.reasoning,
                 "step": episode.step_count,
             }
         )
@@ -550,12 +681,14 @@ class DataCleaningEnv:
         done = episode.step_count >= self.max_steps
         if action.action_type == "report_findings" and episode.step_count >= 7:
             done = True
+        episode.last_updated_at = time.monotonic()
         observation = self._get_observation()
         info["kpi_snapshot"] = dict(episode.kpis)
         info["drift_active"] = episode.drift_active
         info["policy_version"] = episode.policy_version
         info["difficulty"] = episode.difficulty
         info["economic_status"] = self._economic_status(episode)
+        info["timed_out"] = episode.timed_out
         return observation, reward, done, info
 
     def _invalid_action_penalty(self, action_type: str) -> float:
@@ -578,9 +711,25 @@ class DataCleaningEnv:
             return 0.0
         if episode.policy_version < 2:
             return 0.0
-        if action.action_type not in {"validate", "oversight_review", "reconcile_apps"}:
-            return 0.08
-        return 0.0
+
+        if action.action_type in DRIFT_AWARE_ACTIONS:
+            episode.drift_unhandled_since_step = None
+            return 0.0
+
+        if episode.drift_unhandled_since_step is None:
+            return 0.0
+
+        steps_since_update = max(0, episode.step_count - episode.drift_unhandled_since_step)
+        if steps_since_update <= 1:
+            return 0.0
+        penalty = 0.04 + (steps_since_update - 1) * 0.02
+        if penalty <= 0.0:
+            return 0.0
+        episode.stale_penalty_active = True
+        episode.actor_inbox.append(
+            "compliance_officer: drift-aware action still pending; penalty escalates until validated."
+        )
+        return min(0.12, penalty)
 
     def _budget_penalty(self) -> float:
         episode = self.current_episode
@@ -673,7 +822,7 @@ class DataCleaningEnv:
 
         # --- Reasoning quality check ---
         reasoning = action.reasoning.strip() if action.reasoning else ""
-        if len(reasoning) < 10:
+        if len(reasoning) < REASONING_MIN_CHARS:
             components["weak_reasoning_penalty"] = -0.03
             messages.append("Penalty: reasoning too short")
 
@@ -688,16 +837,15 @@ class DataCleaningEnv:
         if repeat_penalty > 0:
             components["loop_penalty"] = -repeat_penalty
             messages.append("Penalty: repeated same action type")
+        episode.stale_penalty_active = False
         if stale_penalty > 0:
             components["stale_strategy_penalty"] = -stale_penalty
-            episode.stale_penalty_active = True
             messages.append("Penalty: stale strategy after policy update")
         if budget_penalty > 0:
             components["budget_penalty"] = -budget_penalty
             messages.append("Penalty: budget overflow")
 
-        raw_total = sum(components.values()) / max(len(components), 1)
-        total_reward = min(1.0, max(0.0, raw_total))
+        total_reward = self._aggregate_reward(components)
         info = {
             "action_type": action.action_type,
             "reasoning": action.reasoning,
@@ -760,13 +908,20 @@ class DataCleaningEnv:
         dup_before = int(dataset.duplicated(subset=None, keep=False).sum())
         if dup_before == 0:
             return 0.2
-        subset = params.get("subset")
+        subset_param = params.get("subset")
+        subset: Optional[List[str]] = None
+        if subset_param is not None:
+            if not isinstance(subset_param, list):
+                return 0.02
+            subset = [str(col) for col in subset_param if isinstance(col, str) and col in dataset.columns]
+            if not subset:
+                subset = None
         keep = params.get("keep", "first")
         if self.current_episode.task_id == "task_duplicate_handling" and (
             not isinstance(subset, list) or "invoice_id" not in subset
         ):
             return 0.05
-        if subset and isinstance(subset, list) and all(c in dataset.columns for c in subset):
+        if subset:
             dataset.drop_duplicates(subset=subset, keep=keep, inplace=True)
         else:
             dataset.drop_duplicates(keep=keep, inplace=True)
@@ -882,6 +1037,8 @@ class DataCleaningEnv:
         if not self.current_episode:
             return 0.0
         actor = str(params.get("actor", "unknown")).strip().lower()
+        if actor not in ACTOR_OBJECTIVES:
+            return 0.02
         if actor in self.current_episode.delegated_work:
             self.current_episode.delegated_work[actor] = "resolved"
             self.current_episode.actor_inbox.append(f"{actor}: escalation resolved.")
@@ -946,7 +1103,8 @@ class DataCleaningEnv:
         actor = str(params.get("actor", "")).strip().lower()
         if actor not in ACTOR_OBJECTIVES:
             return 0.02
-        episode.inspected_actors.append(actor)
+        if actor not in episode.inspected_actors:
+            episode.inspected_actors.append(actor)
         trust = episode.actor_trust.get(actor, 0.5)
         trust_label = "high" if trust > 0.7 else "medium" if trust > 0.4 else "low"
         episode.actor_inbox.append(
@@ -981,6 +1139,7 @@ class DataCleaningEnv:
             return 0.0
         episode = self.current_episode
         episode.policy_clarifications_requested += 1
+        current_version = int(episode.policy_version)
         if episode.policy_version == 1:
             msg = "Policy v1: Standard compliance rules apply. No special requirements."
         elif episode.policy_version == 2:
@@ -991,7 +1150,10 @@ class DataCleaningEnv:
                    "resolved ticket status before any invoice can be closed.")
         episode.actor_inbox.append(f"policy_office: {msg}")
         episode.drift_notice = msg
-        return 0.2 if episode.policy_version >= 2 else 0.1
+        if current_version in episode.policy_clarified_versions:
+            return 0.03
+        episode.policy_clarified_versions.append(current_version)
+        return 0.22 if episode.policy_version >= 2 else 0.14
 
     def state(self) -> Dict[str, Any]:
         if not self.current_episode:
@@ -1023,4 +1185,7 @@ class DataCleaningEnv:
             "process_bonuses": dict(episode.process_bonuses),
             "actor_trust": {k: round(v, 3) for k, v in episode.actor_trust.items()},
             "inspected_actors": list(episode.inspected_actors),
+            "episode_timeout_seconds": self.episode_timeout_seconds,
+            "episode_elapsed_seconds": round(self._episode_elapsed_seconds(), 3),
+            "timed_out": episode.timed_out,
         }

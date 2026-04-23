@@ -2,9 +2,14 @@ import json
 import random
 from collections import Counter
 from pathlib import Path
+import sys
 from typing import Callable, Dict, List, Sequence
 
 import numpy as np
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from src.environment import DataCleaningEnv
 from src.graders import (
@@ -14,6 +19,7 @@ from src.graders import (
     MissingValuesGrader,
 )
 from src.models import Action
+from src.policy_space import ACTION_SPACE, EXTENDED_REPORT_PARAMS
 
 
 OUTPUT_DIR = Path("artifacts")
@@ -30,85 +36,6 @@ TASK_SPECS: Sequence[tuple[str, Callable]] = (
     ("task_complex_validation", ComplexValidationGrader),
     ("task_enterprise_orchestration", EnterpriseOrchestrationGrader),
 )
-
-ACTION_SPACE: Dict[str, List[Dict]] = {
-    "task_missing_values": [
-        {"action_type": "analyze", "parameters": {}},
-        {"action_type": "impute", "parameters": {"method": "forward_fill"}},
-        {"action_type": "impute", "parameters": {"method": "mean"}},
-        {"action_type": "deduplicate", "parameters": {"keep": "first"}},
-        {"action_type": "validate", "parameters": {}},
-        {
-            "action_type": "report_findings",
-            "parameters": {
-                "include_summary": True,
-                "include_quality_score": True,
-                "include_recommendations": True,
-            },
-        },
-    ],
-    "task_duplicate_handling": [
-        {"action_type": "analyze", "parameters": {}},
-        {"action_type": "deduplicate", "parameters": {"keep": "first"}},
-        {"action_type": "deduplicate", "parameters": {"keep": "last"}},
-        {"action_type": "validate", "parameters": {}},
-        {"action_type": "reconcile_apps", "parameters": {"join_key": "account_id"}},
-        {
-            "action_type": "report_findings",
-            "parameters": {
-                "include_summary": True,
-                "include_quality_score": True,
-                "include_recommendations": True,
-            },
-        },
-    ],
-    "task_complex_validation": [
-        {"action_type": "analyze", "parameters": {}},
-        {"action_type": "impute", "parameters": {"method": "forward_fill"}},
-        {"action_type": "deduplicate", "parameters": {"keep": "first"}},
-        {"action_type": "validate", "parameters": {}},
-        {"action_type": "reconcile_apps", "parameters": {"join_key": "account_id"}},
-        {
-            "action_type": "report_findings",
-            "parameters": {
-                "include_summary": True,
-                "include_quality_score": True,
-                "include_recommendations": True,
-            },
-        },
-    ],
-    "task_enterprise_orchestration": [
-        {"action_type": "analyze", "parameters": {}},
-        {"action_type": "inspect_actor", "parameters": {"actor": "finance_bot"}},
-        {"action_type": "inspect_actor", "parameters": {"actor": "analytics_assistant"}},
-        {"action_type": "delegate", "parameters": {"actor": "finance_bot", "objective": "invoice cleanup"}},
-        {"action_type": "delegate", "parameters": {"actor": "support_lead", "objective": "critical ticket triage"}},
-        {"action_type": "delegate", "parameters": {"actor": "sales_ops", "objective": "protect conversion"}},
-        {"action_type": "resolve_alert", "parameters": {"actor": "finance_bot"}},
-        {"action_type": "resolve_alert", "parameters": {"actor": "support_lead"}},
-        {"action_type": "oversight_review", "parameters": {"actor": "analytics_assistant", "explain": True}},
-        {"action_type": "reconcile_apps", "parameters": {"join_key": "account_id"}},
-        {"action_type": "request_policy_clarification", "parameters": {}},
-        {
-            "action_type": "validate",
-            "parameters": {
-                "compliance_tier_type": "categorical_nonempty",
-                "ticket_priority_type": "categorical_nonempty",
-            },
-        },
-        {
-            "action_type": "report_findings",
-            "parameters": {
-                "include_summary": True,
-                "include_quality_score": True,
-                "include_recommendations": True,
-                "include_actor_tradeoffs": True,
-                "include_budget_analysis": True,
-            },
-        },
-    ],
-}
-
 
 def _make_action(proto: Dict, columns: List[str], task_id: str) -> Action:
     if task_id == "task_enterprise_orchestration":
@@ -175,13 +102,7 @@ def _random_policy(rng: random.Random) -> Dict[str, List[Dict]]:
             sequence.append(dict(rng.choice(options)))
         sequence[-1] = {
             "action_type": "report_findings",
-            "parameters": {
-                "include_summary": True,
-                "include_quality_score": True,
-                "include_recommendations": True,
-                "include_actor_tradeoffs": True,
-                "include_budget_analysis": True,
-            },
+            "parameters": dict(EXTENDED_REPORT_PARAMS),
         }
         policy[task_id] = sequence
     return policy
@@ -196,13 +117,7 @@ def _mutate_policy(policy: Dict[str, List[Dict]], rng: random.Random) -> Dict[st
     if idx == len(candidate[task_id]) - 1:
         candidate[task_id][idx] = {
             "action_type": "report_findings",
-            "parameters": {
-                "include_summary": True,
-                "include_quality_score": True,
-                "include_recommendations": True,
-                "include_actor_tradeoffs": True,
-                "include_budget_analysis": True,
-            },
+            "parameters": dict(EXTENDED_REPORT_PARAMS),
         }
     return candidate
 

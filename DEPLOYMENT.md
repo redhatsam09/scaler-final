@@ -1,55 +1,68 @@
-#!/bin/bash
-set -e
+# Deployment Guide (GitHub + Hugging Face Space)
 
-echo "=========================================="
-echo "OpenEnv Competitive Deployment Checklist"
-echo "=========================================="
-echo ""
+This project supports token-only Hugging Face deployment.
 
-SPACE_NAME="scaler-final-openenv"
-HF_USERNAME="samdutta123"
+## 1) Run local quality checks
 
-echo "1) Push latest code"
-echo "-------------------"
-echo "cd /workspaces/scaler-final"
-echo "git add ."
-echo "git commit -m 'Upgrade: multi-app orchestration, drift, RL evidence pipeline'"
-echo "git push origin main"
-echo ""
+```bash
+cd /workspaces/scaler-final
+./scripts/run_local_checks.sh
+```
 
-echo "2) Build/refresh HF Space"
-echo "-------------------------"
-echo "SDK: Docker"
-echo "Space URL: https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}"
-echo ""
+## 2) Commit and push to GitHub
 
-echo "3) Verify live API"
-echo "------------------"
-echo "curl -sS https://${HF_USERNAME}-${SPACE_NAME}.hf.space/health"
-echo "curl -sS -X POST 'https://${HF_USERNAME}-${SPACE_NAME}.hf.space/reset' \\"
-echo "  -H 'Content-Type: application/json' \\"
-echo "  -d '{\"task_id\":\"task_enterprise_orchestration\",\"seed\":2026}'"
-echo ""
+```bash
+cd /workspaces/scaler-final
+git add .
+git commit -m "Finalize production hardening and submission pipeline"
+git push origin opus
+```
 
-echo "4) Generate fresh evidence artifacts"
-echo "------------------------------------"
-echo "openenv validate"
-echo "python world_modeling_demo.py"
-echo "python inference.py"
-echo "python training/trl_sft_training.py"
-echo "python training/evaluate_reward_improvement.py"
-echo ""
+Use your target branch in place of `opus` if needed.
 
-echo "5) Publish external links in README"
-echo "-----------------------------------"
-echo "- Colab URL"
-echo "- Mini-blog URL or <2 minute video URL"
-echo ""
+If your Space is connected to GitHub `main`, promote your validated branch:
 
-echo "6) Final submission package sanity"
-echo "----------------------------------"
-echo "Ensure README links include:"
-echo "- HF Space URL"
-echo "- Live API URL"
-echo "- Colab URL"
-echo "- Blog/video URL"
+```bash
+cd /workspaces/scaler-final
+git push origin opus:main
+```
+
+## 3) Deploy to Hugging Face Space using token auth
+
+Required token scope: write access to the Space repository.
+
+```bash
+cd /workspaces/scaler-final
+export HF_TOKEN="<your_hf_write_token>"
+export HF_SPACE_ID="samdutta123/scaler-final-openenv"
+./scripts/deploy_hf_space.sh
+```
+
+Optional overrides:
+
+```bash
+export HF_TARGET_BRANCH="main"
+export HF_SPACE_ID="<owner>/<space-name>"
+```
+
+## 4) Verify live API endpoints
+
+```bash
+curl -sS https://samdutta123-scaler-final-openenv.hf.space/health
+curl -sS -X POST 'https://samdutta123-scaler-final-openenv.hf.space/reset' \
+	-H 'Content-Type: application/json' \
+	-d '{"task_id":"task_enterprise_orchestration","seed":2026}'
+curl -sS https://samdutta123-scaler-final-openenv.hf.space/openapi.json | grep '"/close"'
+```
+
+Expected signals after the latest deployment:
+- `/health` includes `active_sessions` and `session_ttl_seconds`
+- OpenAPI includes `/close`
+
+## 5) Final README links for submission
+
+Ensure the README contains reachable links for:
+- Hugging Face Space
+- Live API
+- Colab notebook
+- Mini-blog or short video (or slide deck)
