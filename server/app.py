@@ -1,3 +1,4 @@
+import html
 import json
 import os
 import threading
@@ -266,6 +267,193 @@ def _obs_to_dict(observation) -> Dict[str, Any]:
     }
 
 
+def _compact_value(value: Any) -> str:
+        if value is None:
+                return "—"
+        if isinstance(value, bool):
+                return "Yes" if value else "No"
+        if isinstance(value, int) and not isinstance(value, bool):
+                return str(value)
+        if isinstance(value, float):
+                return f"{value:.3f}"
+        if isinstance(value, (list, tuple, set, dict)):
+                return json.dumps(value, ensure_ascii=False)
+        return str(value)
+
+
+def _mapping_rows(mapping: Dict[str, Any]) -> list[list[str]]:
+        return [[str(key), _compact_value(value)] for key, value in mapping.items()]
+
+
+def _render_html_table(title: str, rows: list[list[str]], headers: list[str]) -> str:
+        if not rows:
+                return f"""
+                <section class=\"panel panel-soft\">
+                    <div class=\"panel-title\">{html.escape(title)}</div>
+                    <div class=\"panel-empty\">No data available.</div>
+                </section>
+                """
+
+        header_html = "".join(f"<th>{html.escape(str(header))}</th>" for header in headers)
+        body_rows = []
+        for row in rows:
+                cells = "".join(f"<td>{html.escape(_compact_value(cell))}</td>" for cell in row)
+                body_rows.append(f"<tr>{cells}</tr>")
+
+        return f"""
+        <section class=\"panel panel-soft\">
+            <div class=\"panel-title\">{html.escape(title)}</div>
+            <div class=\"table-wrap\">
+                <table class=\"dash-table\">
+                    <thead><tr>{header_html}</tr></thead>
+                    <tbody>{''.join(body_rows)}</tbody>
+                </table>
+            </div>
+        </section>
+        """
+
+
+def _render_stat_card(label: str, value: Any, note: str = "", accent: str = "") -> str:
+        accent_class = f" accent-{accent}" if accent else ""
+        note_html = f"<div class=\"stat-note\">{html.escape(note)}</div>" if note else ""
+        return f"""
+        <div class=\"stat-card{accent_class}\">
+            <div class=\"stat-label\">{html.escape(label)}</div>
+            <div class=\"stat-value\">{html.escape(_compact_value(value))}</div>
+            {note_html}
+        </div>
+        """
+
+
+def _render_chip_list(items: list[str], empty_label: str = "None") -> str:
+        if not items:
+                return f"<span class=\"chip chip-muted\">{html.escape(empty_label)}</span>"
+        return "".join(f"<span class=\"chip\">{html.escape(item)}</span>" for item in items)
+
+
+def _render_dashboard_html(observation, task_id: str, difficulty: str, seed: str, reward: str, grade: str, done: bool, info: Dict[str, Any], history: list[Dict[str, Any]]) -> str:
+        urgency_signals = list(observation.urgency_signals or [])
+        actor_messages = list(observation.actor_messages or [])[-4:]
+        objectives = list((observation.actor_objectives or {}).items())
+        conflicts = list((observation.actor_conflicts or {}).items())
+        available_actions = list(observation.available_actions or [])
+
+        recent_history = history[-5:]
+        history_items = [f"{entry['action']} ({entry['reward']:.3f})" for entry in recent_history]
+        if not history_items:
+                history_items = ["No steps executed yet. Use the controls on the left to initialize the episode."]
+
+        status_label = "EPISODE COMPLETE" if done else "EPISODE ACTIVE"
+        status_class = "status-done" if done else "status-live"
+        drift_notice = observation.drift_notice or "No drift notice has been triggered yet."
+        actor_cards = [
+                f"<div class='mini-card'><span>Task</span><strong>{html.escape(task_id)}</strong></div>",
+                f"<div class='mini-card'><span>Difficulty</span><strong>{html.escape(difficulty)}</strong></div>",
+                f"<div class='mini-card'><span>Seed</span><strong>{html.escape(seed)}</strong></div>",
+                f"<div class='mini-card'><span>Step</span><strong>{html.escape(str(observation.step_count))}</strong></div>",
+        ]
+
+        score_cards = [
+                _render_stat_card("Step Reward", reward, "Current transition reward", "mint"),
+                _render_stat_card("Grade", grade, "Task-specific grader score", "amber"),
+                _render_stat_card("Policy Version", observation.policy_version, "Latest compliance rule set", "steel"),
+                _render_stat_card("Budget Used", observation.economic_status.get("cost_used", "—"), f"Budget: {_compact_value(observation.economic_status.get('budget', '—'))}", "violet"),
+        ]
+
+        objective_rows = [[name, value] for name, value in objectives] or [["No actors", "No objectives available"]]
+        conflict_rows = [[name, value] for name, value in conflicts] or [["No conflicts", "No conflict statements available"]]
+
+        signal_cards = [
+                _render_html_table("Actor Objectives", objective_rows, ["Actor", "Objective"]),
+                _render_html_table("Conflict Map", conflict_rows, ["Pair", "Conflict"]),
+        ]
+
+        return f"""
+        <section class=\"hero\">
+            <div class=\"hero-copy\">
+                <div class=\"eyebrow\">OpenEnv Hackathon 2026 · World Modeling × Multi-Agent Coordination</div>
+                <h2>Enterprise Orchestration Console</h2>
+                <p>A refined live demo for agentic reasoning under schema drift, budget pressure, and conflicting stakeholder incentives.</p>
+            </div>
+            <div class=\"hero-badges\">
+                <div class=\"badge badge-primary\">+43.8% trained reward gain</div>
+                <div class=\"badge\">0.831 held-out drift score</div>
+                <div class=\"badge\">5 autonomous actors</div>
+            </div>
+        </section>
+
+        <section class=\"panel panel-main\">
+            <div class=\"status-row\">
+                <span class=\"status-pill {status_class}\">{status_label}</span>
+                <span class=\"status-pill\">Policy v{html.escape(str(observation.policy_version))}</span>
+                <span class=\"status-pill\">{html.escape(str(observation.dataset_shape[0]))} rows × {html.escape(str(observation.dataset_shape[1]))} cols</span>
+                <span class=\"status-pill\">{html.escape(_compact_value(observation.economic_status.get('cost_used', '—')))} used / {html.escape(_compact_value(observation.economic_status.get('budget', '—')))} budget</span>
+            </div>
+
+            <div class=\"stat-grid\">{''.join(actor_cards)}</div>
+
+            <div class=\"panel-title\">Observation Narrative</div>
+            <div class=\"narrative\">{html.escape(observation.natural_language_observation or 'No narrative observation is available yet.')}</div>
+
+            <div class=\"panel-title\">Live Signals</div>
+            <div class=\"signal-grid\">
+                <div class=\"signal-card\">
+                    <div class=\"signal-label\">Urgency</div>
+                    <div class=\"signal-body\">{_render_chip_list(urgency_signals, 'No active alerts')}</div>
+                </div>
+                <div class=\"signal-card\">
+                    <div class=\"signal-label\">Available Actions</div>
+                    <div class=\"signal-body\">{_render_chip_list(available_actions, 'No actions reported')}</div>
+                </div>
+            </div>
+
+            <div class=\"drift-box\">
+                <div class=\"signal-label\">Drift / Policy Note</div>
+                <div class=\"signal-body\">{html.escape(drift_notice)}</div>
+            </div>
+
+            <div class=\"two-col\">
+                {''.join(score_cards)}
+            </div>
+
+            <div class=\"two-col\">
+                {''.join(signal_cards)}
+            </div>
+
+            <div class=\"panel-title\">Recent Actor Messages</div>
+            <ul class=\"bullet-list\">
+                {''.join(f'<li>{html.escape(message)}</li>' for message in actor_messages) if actor_messages else '<li>No active communications</li>'}
+            </ul>
+
+            <div class=\"panel-title\">Execution History</div>
+            <ul class=\"bullet-list\">
+                {''.join(f'<li>{html.escape(item)}</li>' for item in history_items)}
+            </ul>
+        </section>
+        """
+
+
+def _suggest_next_steps(observation, history: list[Dict[str, Any]]) -> list[str]:
+        suggestions: list[str] = []
+        if not history:
+                suggestions.append("Initialize with analyze to map the data quality before changing records.")
+        if observation.drift_notice:
+                suggestions.append("Use validate or oversight_review to adapt to drift before committing more changes.")
+        if observation.urgency_signals:
+                suggestions.append("Address the highest urgency signal first so the episode does not stall.")
+        if observation.actor_messages:
+                suggestions.append("Inspect the relevant actor before delegating if the request looks contradictory or risky.")
+        if observation.missing_values:
+                missing_total = sum(observation.missing_values.values())
+                if missing_total > 0:
+                        suggestions.append("Impute or validate the highest-missing columns to improve the quality index.")
+        if "delegate" in observation.available_actions:
+                suggestions.append("Delegate only after inspection when the actor incentives are materially different.")
+        if not suggestions:
+                suggestions.append("Continue with a disciplined analyze → act → validate loop.")
+        return suggestions[:4]
+
+
 @app.post("/reset", response_model=ResetResponse)
 @app.post("/reset/", response_model=ResetResponse)
 async def reset(request: Request):
@@ -429,7 +617,48 @@ def _build_gradio_demo():
         return None
 
     demo_env = DataCleaningEnv(seed=42)
-    demo_session = {"obs": None, "history": [], "task_id": "task_enterprise_orchestration"}
+    demo_session = {"obs": None, "history": [], "task_id": "task_enterprise_orchestration", "seed": 42, "difficulty": "medium"}
+
+    def _empty_reward_rows() -> list[list[str]]:
+        return [["Reward", "0.0000"], ["Grade", "0.0000"], ["Budget used", "—"], ["Budget remaining", "—"]]
+
+    def _observation_tables(obs) -> tuple[list[list[str]], list[list[str]]]:
+        schema_rows = [[column, obs.data_types.get(column, "—"), obs.missing_values.get(column, 0)] for column in obs.column_names]
+        kpi_rows = [[metric, value] for metric, value in obs.kpi_snapshot.items()]
+        if not kpi_rows:
+            kpi_rows = [["No KPIs reported", "—"]]
+        return schema_rows, kpi_rows
+
+    def _build_reward_rows(obs, reward_value: float, grade_value: float, info: Dict[str, Any]) -> list[list[str]]:
+        components = info.get("components", {}) if isinstance(info, dict) else {}
+        budget = obs.economic_status.get("budget", None)
+        used = obs.economic_status.get("cost_used", None)
+        remaining = None
+        if isinstance(budget, (int, float)) and isinstance(used, (int, float)):
+            remaining = max(0.0, float(budget) - float(used))
+
+        rows = [["Reward", f"{reward_value:.4f}"], ["Grade", f"{grade_value:.4f}"]]
+        if budget is not None:
+            rows.append(["Budget", _compact_value(budget)])
+        if used is not None:
+            rows.append(["Budget used", _compact_value(used)])
+        if remaining is not None:
+            rows.append(["Budget remaining", f"{remaining:.2f}"])
+        for key, value in components.items():
+            rows.append([f"Component: {key}", _compact_value(value)])
+        return rows or _empty_reward_rows()
+
+    def _build_raw_payload(obs, reward_value: float, grade_value: float, done: bool, info: Dict[str, Any], action_payload: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "task_id": demo_session["task_id"],
+            "observation": _obs_to_dict(obs),
+            "reward": reward_value,
+            "grade": grade_value,
+            "done": done,
+            "history": demo_session["history"],
+            "action": action_payload,
+            "info": info,
+        }
 
     def reset_env(task_id, difficulty, seed):
         seed_val = int(seed) if seed else 42
@@ -437,34 +666,38 @@ def _build_gradio_demo():
         demo_session["obs"] = obs
         demo_session["history"] = []
         demo_session["task_id"] = task_id
+        demo_session["seed"] = seed_val
+        demo_session["difficulty"] = difficulty
 
-        state_text = obs.natural_language_observation
-        kpi_text = "\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
-        actors = "\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages) if obs.actor_messages else "- No active communications"
+        schema_rows, kpi_rows = _observation_tables(obs)
+        reward_rows = _empty_reward_rows()
+        history_text = "No execution history recorded yet."
+        guidance_text = "\n".join(f"- {step}" for step in _suggest_next_steps(obs, demo_session["history"]))
+        raw_payload = _build_raw_payload(obs, 0.0, 0.0, False, {"components": {}}, {"event": "reset", "task_id": task_id, "difficulty": difficulty, "seed": seed_val})
 
-        output = f"""### System Initialized
-**Task:** {task_id} | **Difficulty:** {difficulty} | **Seed:** {seed_val} | **Dataset:** {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols
-
-**Observation State:**
-{state_text}
-
-**Key Performance Indicators:**
-{kpi_text}
-
-**Urgency Signals:**
-{urgency}
-
-**Actor Communications:**
-{actors}
-
-**Available Actions:** {', '.join(obs.available_actions)}
-"""
-        return output, ""
+        return (
+            _render_dashboard_html(obs, task_id, difficulty, str(seed_val), "0.0000", "0.0000", False, {"components": {}}, demo_session["history"]),
+            schema_rows,
+            kpi_rows,
+            reward_rows,
+            history_text,
+            guidance_text,
+            raw_payload,
+        )
 
     def step_env(action_type, target_cols, params_json, reasoning):
         if demo_session["obs"] is None:
-            return "ERROR: System not initialized. Please reset the environment first.", ""
+            empty_obs = demo_env.reset(task_id=demo_session["task_id"], seed=42)
+            schema_rows, kpi_rows = _observation_tables(empty_obs)
+            return (
+                _render_dashboard_html(empty_obs, demo_session["task_id"], demo_session["difficulty"], str(demo_session["seed"]), "0.0000", "0.0000", False, {"components": {}}, demo_session["history"]),
+                schema_rows,
+                kpi_rows,
+                _empty_reward_rows(),
+                "No episode is active yet.",
+                "Initialize the environment first to execute steps.",
+                {"error": "System not initialized. Reset the environment first."},
+            )
 
         try:
             params = json.loads(params_json) if params_json.strip() else {}
@@ -477,11 +710,6 @@ def _build_gradio_demo():
         demo_session["obs"] = obs
         demo_session["history"].append({"action": action_type, "reward": reward.value})
 
-        kpi_text = "\n".join(f"- {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\n".join(f"- ALERT: {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- No active alerts"
-        actors = "\n".join(f"- MESSAGE: {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "- No active communications"
-        components = "\n".join(f"- {k}: {v:.4f}" for k, v in info.get("components", {}).items())
-
         graders = {
             "task_missing_values": MissingValuesGrader,
             "task_duplicate_handling": DuplicateHandlingGrader,
@@ -489,82 +717,316 @@ def _build_gradio_demo():
             "task_enterprise_orchestration": EnterpriseOrchestrationGrader,
         }
         grade = graders[demo_session["task_id"]].grade(demo_env.current_episode)
+        schema_rows, kpi_rows = _observation_tables(obs)
+        reward_rows = _build_reward_rows(obs, reward.value, grade, info)
+        raw_payload = _build_raw_payload(obs, reward.value, grade, done, info, {
+            "action_type": action_type,
+            "target_columns": cols,
+            "parameters": params,
+            "reasoning": reasoning or "System execution",
+        })
 
-        history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
+        history_line = " → ".join(f"{item['action']}({item['reward']:.3f})" for item in demo_session["history"])
+        if not history_line:
+            history_line = "No execution history recorded yet."
 
-        output = f"""### {'EPISODE TERMINATED' if done else f'Execution Step: {obs.step_count}'}
-**Action Processed:** {action_type} | **Step Reward:** {reward.value:.4f} | **Cumulative Grade:** {grade:.4f} | **Status:** {'Done' if done else 'Active'}
+        guidance_text = "\n".join(f"- {step}" for step in _suggest_next_steps(obs, demo_session["history"]))
 
-**Observation State:**
-{obs.natural_language_observation}
-
-**Key Performance Indicators:**
-{kpi_text}
-
-**Reward Decomposition:**
-{components}
-
-**Urgency Signals:**
-{urgency}
-
-**Actor Communications:**
-{actors}
-
-**Execution History:** {history_text}
-"""
-        return output, ""
+        return (
+            _render_dashboard_html(obs, demo_session["task_id"], demo_session["difficulty"], str(demo_session["seed"]), f"{reward.value:.4f}", f"{grade:.4f}", done, info, demo_session["history"]),
+            schema_rows,
+            kpi_rows,
+            reward_rows,
+            history_line,
+            guidance_text,
+            raw_payload,
+        )
 
     custom_css = """
-    .gradio-container { font-family: 'Inter', sans-serif; }
-    h1 { color: #1e293b; text-align: left; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-    .gr-button-primary { background-color: #0f172a; color: white; font-weight: 600; border-radius: 4px; }
-    .gr-button-secondary { background-color: #334155; color: white; font-weight: 600; border-radius: 4px; }
-    .dark .gr-button-primary { background-color: #3b82f6; }
-    .dark .gr-button-secondary { background-color: #64748b; }
+    .gradio-container {
+        font-family: 'IBM Plex Sans', 'Segoe UI', 'Helvetica Neue', sans-serif;
+        background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 36%),
+            radial-gradient(circle at top right, rgba(16, 185, 129, 0.15), transparent 30%),
+            linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    }
+    .dark .gradio-container {
+        background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 36%),
+            radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 30%),
+            linear-gradient(180deg, #020617 0%, #0f172a 100%);
+    }
+    .hero, .panel {
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+        backdrop-filter: blur(16px);
+    }
+    .hero {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-end;
+        padding: 24px;
+        border-radius: 24px;
+        margin-bottom: 18px;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.9));
+        color: white;
+    }
+    .hero h2 {
+        margin: 6px 0 10px;
+        font-size: 2.1rem;
+        line-height: 1.05;
+    }
+    .hero p {
+        margin: 0;
+        color: rgba(226, 232, 240, 0.9);
+        max-width: 62ch;
+    }
+    .eyebrow {
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        color: rgba(191, 219, 254, 0.95);
+    }
+    .hero-badges {
+        display: grid;
+        gap: 10px;
+        min-width: 220px;
+    }
+    .badge {
+        border-radius: 999px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(241, 245, 249, 0.96);
+        font-weight: 600;
+        text-align: center;
+    }
+    .badge-primary {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.28), rgba(59, 130, 246, 0.32));
+    }
+    .panel {
+        border-radius: 22px;
+        padding: 20px;
+        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.76);
+    }
+    .dark .panel {
+        background: rgba(15, 23, 42, 0.72);
+    }
+    .panel-main { overflow: hidden; }
+    .panel-soft {
+        margin-bottom: 14px;
+        background: rgba(255, 255, 255, 0.55);
+    }
+    .dark .panel-soft {
+        background: rgba(15, 23, 42, 0.54);
+    }
+    .panel-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        color: #0f172a;
+    }
+    .dark .panel-title { color: #e2e8f0; }
+    .status-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(148, 163, 184, 0.12);
+        color: #0f172a;
+        font-size: 0.86rem;
+        font-weight: 600;
+    }
+    .dark .status-pill { color: #e2e8f0; }
+    .status-live { background: rgba(14, 165, 233, 0.16); }
+    .status-done { background: rgba(16, 185, 129, 0.18); }
+    .stat-grid, .two-col, .signal-grid {
+        display: grid;
+        gap: 12px;
+    }
+    .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+    .two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 16px; }
+    .signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 12px; }
+    .stat-card, .signal-card, .drift-box {
+        border-radius: 18px;
+        padding: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(255, 255, 255, 0.78);
+    }
+    .dark .stat-card, .dark .signal-card, .dark .drift-box {
+        background: rgba(15, 23, 42, 0.6);
+    }
+    .stat-label, .signal-label {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+    .dark .stat-label, .dark .signal-label { color: #94a3b8; }
+    .stat-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .dark .stat-value { color: #f8fafc; }
+    .stat-note {
+        margin-top: 6px;
+        color: #64748b;
+        font-size: 0.82rem;
+    }
+    .dark .stat-note { color: #94a3b8; }
+    .narrative {
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(14, 165, 233, 0.08);
+        color: #0f172a;
+        line-height: 1.65;
+        margin-bottom: 16px;
+        white-space: pre-wrap;
+    }
+    .dark .narrative { color: #e2e8f0; background: rgba(14, 165, 233, 0.12); }
+    .signal-body {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        line-height: 1.6;
+        color: #0f172a;
+    }
+    .dark .signal-body { color: #e2e8f0; }
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: rgba(59, 130, 246, 0.12);
+        color: #0f172a;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .dark .chip { color: #f8fafc; background: rgba(59, 130, 246, 0.16); }
+    .chip-muted { background: rgba(148, 163, 184, 0.16); }
+    .bullet-list {
+        margin: 0;
+        padding-left: 20px;
+        color: #0f172a;
+    }
+    .dark .bullet-list { color: #e2e8f0; }
+    .bullet-list li { margin-bottom: 8px; }
+    .table-wrap {
+        overflow-x: auto;
+    }
+    .dash-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #0f172a;
+        font-size: 0.92rem;
+    }
+    .dark .dash-table { color: #e2e8f0; }
+    .dash-table th, .dash-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        text-align: left;
+        vertical-align: top;
+    }
+    .dash-table th {
+        font-size: 0.76rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .dark .dash-table th { color: #94a3b8; }
+    .mini-card {
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .dark .mini-card { background: rgba(15, 23, 42, 0.72); }
+    .mini-card span {
+        display: block;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+    .mini-card strong { color: #0f172a; }
+    .dark .mini-card strong { color: #f8fafc; }
+    .gr-button-primary {
+        background: linear-gradient(135deg, #0f172a, #1d4ed8) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
+        border: 0 !important;
+        box-shadow: 0 14px 30px rgba(29, 78, 216, 0.28);
+    }
+    .gr-button-secondary {
+        background: linear-gradient(135deg, #475569, #334155) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
+        border: 0 !important;
+    }
     """
 
     with gr.Blocks(title="Enterprise Orchestration Console") as demo:
         gr.HTML(f"<style>{custom_css}</style>")
         gr.Markdown("# Enterprise Orchestration Console")
-        gr.Markdown("*Professional LLM Reinforcement Learning Environment (Theme: World Modeling & Multi-Agent)*")
+        gr.Markdown("*Refined live demo for world modeling, multi-agent negotiation, and drift-aware execution.*")
 
         with gr.Tabs():
-            with gr.TabItem("Environment Simulator"):
+            with gr.TabItem("Live Console"):
                 with gr.Row():
-                    with gr.Column(scale=1):
-                        gr.Markdown("### Configuration")
+                    with gr.Column(scale=1, min_width=320):
+                        gr.Markdown("### Episode Controls")
                         task_dd = gr.Dropdown(
-                            choices=["task_enterprise_orchestration", "task_missing_values",
-                                     "task_duplicate_handling", "task_complex_validation"],
-                            value="task_enterprise_orchestration", label="Task Identifier"
+                            choices=["task_enterprise_orchestration", "task_missing_values", "task_duplicate_handling", "task_complex_validation"],
+                            value="task_enterprise_orchestration",
+                            label="Task Identifier",
                         )
                         diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="medium", label="Simulation Difficulty")
                         seed_tb = gr.Textbox(value="42", label="Random Seed")
                         reset_btn = gr.Button("Initialize System", variant="primary")
 
-                        gr.Markdown("### Execution Panel")
+                        gr.Markdown("### Action Composer")
                         action_dd = gr.Dropdown(
-                            choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
-                                     "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
-                                     "inspect_actor", "audit_records", "request_policy_clarification"],
-                            value="analyze", label="Action Type"
+                            choices=["analyze", "impute", "deduplicate", "validate", "report_findings", "delegate", "resolve_alert", "reconcile_apps", "oversight_review", "inspect_actor", "audit_records", "request_policy_clarification"],
+                            value="analyze",
+                            label="Action Type",
                         )
-                        cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status")
-                        params_tb = gr.Textbox(label="Action Parameters (JSON)", value="{}", lines=2)
-                        reason_tb = gr.Textbox(label="Strategic Reasoning", placeholder="Provide rationale for model execution...")
+                        cols_tb = gr.Textbox(label="Target Columns", placeholder="account_id, invoice_status")
+                        params_tb = gr.Textbox(label="Action Parameters (JSON)", value="{}", lines=3)
+                        reason_tb = gr.Textbox(label="Strategic Reasoning", placeholder="Explain why this step is appropriate.", lines=4)
                         step_btn = gr.Button("Execute Step", variant="secondary")
 
-                    with gr.Column(scale=2):
-                        output_md = gr.Markdown("*Awaiting system initialization...*")
-                        error_md = gr.Markdown("")
+                        gr.Markdown("### Episode Guidance")
+                        guidance_box = gr.Markdown("Initialize an episode to see tactical guidance.")
 
-                reset_btn.click(reset_env, inputs=[task_dd, diff_dd, seed_tb], outputs=[output_md, error_md])
-                step_btn.click(step_env, inputs=[action_dd, cols_tb, params_tb, reason_tb], outputs=[output_md, error_md])
+                    with gr.Column(scale=2, min_width=560):
+                        summary_html = gr.HTML(value="<div class='panel panel-main'><div class='panel-title'>Awaiting initialization</div><div class='narrative'>Press Initialize System to load the live environment dashboard.</div></div>")
+                        with gr.Row():
+                            schema_df = gr.Dataframe(headers=["Column", "Type", "Missing"], interactive=False, label="Schema Snapshot")
+                            kpi_df = gr.Dataframe(headers=["KPI", "Value"], interactive=False, label="KPI Snapshot")
+                        reward_df = gr.Dataframe(headers=["Signal", "Value"], interactive=False, label="Reward & Budget")
+                        history_md = gr.Markdown("No execution history recorded yet.")
+                        raw_json = gr.JSON(label="Raw Observation Payload")
 
-            with gr.TabItem("Training Evidence (GRPO)"):
-                gr.Markdown("""### Reinforcement Learning Training Results
-This environment was used to train an LLM agent via **Generative Reward Policy Optimization (GRPO)** using the `unsloth/Qwen2.5-1.5B-Instruct` model.
-The charts below show measurable improvement across training stages, validated over 5 independent seed groups.""")
+                reset_btn.click(reset_env, inputs=[task_dd, diff_dd, seed_tb], outputs=[summary_html, schema_df, kpi_df, reward_df, history_md, guidance_box, raw_json])
+                step_btn.click(step_env, inputs=[action_dd, cols_tb, params_tb, reason_tb], outputs=[summary_html, schema_df, kpi_df, reward_df, history_md, guidance_box, raw_json])
+
+            with gr.TabItem("Training Evidence"):
+                gr.Markdown("### Reinforcement Learning Evidence")
+                gr.Markdown("These charts document the training run that produced the policy used in the demo.")
 
                 import os
                 base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -581,40 +1043,47 @@ The charts below show measurable improvement across training stages, validated o
                 rp = _find("reward_progression_chart.png")
                 tb = _find("task_breakdown_chart.png")
                 ab = _find("ablation_chart.png")
+                flow = _find("world_model_flow.svg")
+                traj = _find("failure_success_trajectory.svg")
 
-                if rp:
-                    gr.Markdown("**Reward Progression** — Average grader score improving from 0.488 (baseline) to 0.701 (trained), a **+43.8% improvement**.")
-                    gr.Image(value=rp, type="filepath", label="Reward Progression (Baseline to Mid to Trained)")
-                if tb:
-                    gr.Markdown("**Per-Task Breakdown** — Score improvement across all 4 environment tasks, showing the trained policy generalizes across difficulty levels.")
-                    gr.Image(value=tb, type="filepath", label="Per-Task Score Improvement")
-                if ab:
-                    gr.Markdown("**Ablation Study** — Removing multi-agent actions (delegate, inspect, oversight) drops the score by 0.384, proving that actor negotiation is the core skill the model must learn.")
-                    gr.Image(value=ab, type="filepath", label="Ablation: Actor Actions Impact")
-                if not any([rp, tb, ab]):
+                with gr.Row():
+                    if rp:
+                        gr.Image(value=rp, type="filepath", label="Reward Progression")
+                    if tb:
+                        gr.Image(value=tb, type="filepath", label="Per-Task Score Improvement")
+                with gr.Row():
+                    if ab:
+                        gr.Image(value=ab, type="filepath", label="Ablation: Actor Actions Impact")
+                    if traj:
+                        gr.Image(value=traj, type="filepath", label="Failure vs Success Trajectory")
+                if flow:
+                    gr.Image(value=flow, type="filepath", label="World Model Flow")
+                if not any([rp, tb, ab, flow, traj]):
                     gr.Markdown("*(Training charts not found. Run `python training/generate_charts.py` to generate them.)*")
 
-            with gr.TabItem("About This Environment"):
-                gr.Markdown("""### What does this environment teach an LLM?
+            with gr.TabItem("Method & Metrics"):
+                gr.Markdown("""### What this environment teaches
 
-This environment targets **Theme #3.1 (World Modeling)** and **Theme #1 (Multi-Agent Interactions)**.
+An LLM agent is dropped into a simulated enterprise with three connected systems and five autonomous actors whose incentives conflict. The task is to reason over messy state, react to drift, and sequence actions professionally.
 
-An LLM agent is dropped into a simulated enterprise with 3 interconnected systems (CRM, Billing, Support) and 5 autonomous actors with conflicting objectives. The agent must:
+### Core behaviors
 
-1. **Negotiate with actors** — Finance wants to cut costs, Support wants SLA protection, Sales wants conversion. These goals conflict and the agent must balance tradeoffs.
-2. **Detect deception** — The analytics assistant may recommend shortcuts that destroy compliance. The agent must run oversight reviews to catch this.
-3. **Adapt to schema drift** — Mid-episode, database columns rename, new compliance tiers appear, and validation rules change. The agent must recognize this and re-validate.
-4. **Manage budgets** — Every action costs money. The agent must solve the problem before going bankrupt.
-5. **Reason before acting** — The reward system gives explicit process bonuses for analyzing before imputing, inspecting actors before delegating, and validating after drift.
+- Negotiate with actors when their goals conflict.
+- Detect deception before following untrusted recommendations.
+- Adapt to schema drift and revised validation rules.
+- Manage budget pressure while preserving data quality.
+- Reason before acting so the reward model can distinguish process quality from brute force.
 
-#### Anti-Gaming Design
-- Loop penalties prevent action spam
-- Reasoning quality checks penalize empty rationales
-- Report rewards require actual data improvement
-- Policy clarification only pays once per version
-- Stale-strategy penalties escalate until drift is handled
+### Anti-gaming safeguards
 
-#### Key Metrics
+- Loop penalties prevent action spam.
+- Reasoning quality checks penalize empty rationales.
+- Report rewards require real data improvement.
+- Policy clarification only pays once per version.
+- Drift penalties escalate until the system is handled correctly.
+
+### Key metrics
+
 | Metric | Value |
 |--------|-------|
 | Baseline score | 0.488 |
