@@ -424,11 +424,56 @@ def _build_gradio_demo():
     """Build Gradio UI for judges to interact with the environment."""
     try:
         import gradio as gr
+        import matplotlib.pyplot as plt
+        from pathlib import Path
     except ImportError:
         return None
 
     demo_env = DataCleaningEnv(seed=42)
     demo_session = {"obs": None, "history": [], "task_id": "task_enterprise_orchestration"}
+
+    base_dir = Path(__file__).resolve().parents[1]
+
+    def _artifact_path(name: str) -> str | None:
+        local = base_dir / "artifacts" / name
+        if local.exists():
+            return str(local)
+        return None
+
+    def _history_figure():
+        fig, ax = plt.subplots(figsize=(7.2, 2.8))
+        fig.patch.set_facecolor("#f8fafc")
+        ax.set_facecolor("#ffffff")
+        ax.grid(True, alpha=0.25)
+
+        if not demo_session["history"]:
+            ax.text(0.5, 0.5, "No steps executed yet", ha="center", va="center", transform=ax.transAxes)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_title("Step Reward Trend", fontsize=11)
+            fig.tight_layout()
+            return fig
+
+        xs = list(range(1, len(demo_session["history"]) + 1))
+        ys = [float(item["reward"]) for item in demo_session["history"]]
+        ax.plot(xs, ys, marker="o", linewidth=2.0, color="#1d4ed8")
+        ax.set_xlabel("Step")
+        ax.set_ylabel("Reward")
+        ax.set_title("Step Reward Trend", fontsize=11)
+        fig.tight_layout()
+        return fig
+
+    def _format_kpi_rows(obs):
+        if not obs.kpi_snapshot:
+            return [["No KPI data", "-"]]
+        return [[k, f"{v:.4f}"] for k, v in obs.kpi_snapshot.items()]
+
+    def _format_reward_rows(info: Dict[str, Any], reward_value: float, grade_value: float):
+        rows = [["step_reward", f"{reward_value:.4f}"], ["cumulative_grade", f"{grade_value:.4f}"]]
+        components = info.get("components", {}) if isinstance(info, dict) else {}
+        for key, value in components.items():
+            rows.append([key, f"{float(value):.4f}"])
+        return rows
 
     def reset_env(task_id, difficulty, seed):
         seed_val = int(seed) if seed else 42
@@ -438,33 +483,31 @@ def _build_gradio_demo():
         demo_session["task_id"] = task_id
 
         state_text = obs.natural_language_observation
-        kpi_text = "\n".join(f"  {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\n".join(f"  ⚠️ {s}" for s in obs.urgency_signals) if obs.urgency_signals else "  None"
-        actors = "\n".join(f"  💬 {m}" for m in obs.actor_messages) if obs.actor_messages else "  None"
+        kpi_rows = _format_kpi_rows(obs)
+        reward_rows = [["step_reward", "0.0000"], ["cumulative_grade", "0.0000"]]
+        urgency = "\n".join(f"- {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- None"
+        actors = "\n".join(f"- {m}" for m in obs.actor_messages) if obs.actor_messages else "- None"
 
-        output = f"""🔄 **Environment Reset**
+        output = f"""**Environment Reset**
 **Task:** {task_id} | **Difficulty:** {difficulty} | **Seed:** {seed_val}
 **Dataset:** {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols
 
-📝 **Natural Language Observation:**
+**Natural Language Observation:**
 {state_text}
 
-📊 **KPIs:**
-{kpi_text}
-
-⚠️ **Urgency Signals:**
+**Urgency Signals:**
 {urgency}
 
-💬 **Actor Messages:**
+**Actor Messages:**
 {actors}
 
 **Available Actions:** {', '.join(obs.available_actions)}
 """
-        return output, ""
+        return output, "", kpi_rows, reward_rows, _history_figure()
 
     def step_env(action_type, target_cols, params_json, reasoning):
         if demo_session["obs"] is None:
-            return "❌ Reset the environment first!", ""
+            return "Reset the environment first.", "", [["No KPI data", "-"]], [["step_reward", "0.0000"]], _history_figure()
 
         try:
             params = json.loads(params_json) if params_json.strip() else {}
@@ -477,10 +520,9 @@ def _build_gradio_demo():
         demo_session["obs"] = obs
         demo_session["history"].append({"action": action_type, "reward": reward.value})
 
-        kpi_text = "\n".join(f"  {k}: {v:.3f}" for k, v in obs.kpi_snapshot.items())
-        urgency = "\n".join(f"  ⚠️ {s}" for s in obs.urgency_signals) if obs.urgency_signals else "  None"
-        actors = "\n".join(f"  💬 {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "  None"
-        components = "\n".join(f"  {k}: {v:.4f}" for k, v in info.get("components", {}).items())
+        kpi_rows = _format_kpi_rows(obs)
+        urgency = "\n".join(f"- {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- None"
+        actors = "\n".join(f"- {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "- None"
 
         # Get grade
         graders = {
@@ -490,66 +532,105 @@ def _build_gradio_demo():
             "task_enterprise_orchestration": EnterpriseOrchestrationGrader,
         }
         grade = graders[demo_session["task_id"]].grade(demo_env.current_episode)
+        reward_rows = _format_reward_rows(info, reward.value, grade)
 
         history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
 
-        output = f"""{'🏁 EPISODE COMPLETE' if done else f'Step {obs.step_count}'}
+        output = f"""{'Episode Complete' if done else f'Step {obs.step_count}'}
 **Action:** {action_type} | **Reward:** {reward.value:.4f} | **Grade:** {grade:.4f} | **Done:** {done}
 
-📝 **Observation:**
+**Observation:**
 {obs.natural_language_observation}
 
-📊 **KPIs:**
-{kpi_text}
-
-🧮 **Reward Components:**
-{components}
-
-⚠️ **Urgency:**
+**Urgency:**
 {urgency}
 
-💬 **Actor Messages:**
+**Actor Messages:**
 {actors}
 
-📈 **History:** {history_text}
+**Recent History:** {history_text}
 """
-        return output, ""
+        return output, "", kpi_rows, reward_rows, _history_figure()
 
     with gr.Blocks(title="Enterprise Orchestration Environment") as demo:
-        gr.Markdown("""# 🏢 Enterprise Orchestration Environment
-*Multi-app RL environment with schema drift, actor conflicts, deceptive oversight, and economic budgets*
+        gr.Markdown("""# Enterprise Orchestration Environment
+Multi-app RL environment with schema drift, actor conflicts, deceptive oversight, and economic budgets
         """)
 
-        with gr.Row():
-            with gr.Column(scale=1):
-                gr.Markdown("### 🔄 Reset")
-                task_dd = gr.Dropdown(
-                    choices=["task_enterprise_orchestration", "task_missing_values",
-                             "task_duplicate_handling", "task_complex_validation"],
-                    value="task_enterprise_orchestration", label="Task"
+        with gr.Tabs():
+            with gr.Tab("Simulation Console"):
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        gr.Markdown("### Reset")
+                        task_dd = gr.Dropdown(
+                            choices=["task_enterprise_orchestration", "task_missing_values",
+                                     "task_duplicate_handling", "task_complex_validation"],
+                            value="task_enterprise_orchestration", label="Task"
+                        )
+                        diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="medium", label="Difficulty")
+                        seed_tb = gr.Textbox(value="42", label="Seed")
+                        reset_btn = gr.Button("Reset Environment", variant="primary")
+
+                        gr.Markdown("### Step")
+                        action_dd = gr.Dropdown(
+                            choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
+                                     "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
+                                     "inspect_actor", "audit_records", "request_policy_clarification"],
+                            value="analyze", label="Action"
+                        )
+                        cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status")
+                        params_tb = gr.Textbox(label="Parameters (JSON)", value="{}", lines=2)
+                        reason_tb = gr.Textbox(label="Reasoning", placeholder="State why this action is appropriate")
+                        step_btn = gr.Button("Execute Step", variant="secondary")
+
+                    with gr.Column(scale=2):
+                        output_md = gr.Markdown("Reset the environment to begin.")
+                        error_md = gr.Markdown("")
+                        with gr.Row():
+                            kpi_df = gr.Dataframe(
+                                headers=["KPI", "Value"],
+                                datatype=["str", "str"],
+                                label="KPI Snapshot",
+                                interactive=False,
+                            )
+                            reward_df = gr.Dataframe(
+                                headers=["Component", "Value"],
+                                datatype=["str", "str"],
+                                label="Reward Breakdown",
+                                interactive=False,
+                            )
+                        history_plot = gr.Plot(label="Step Reward Trend")
+
+                reset_btn.click(
+                    reset_env,
+                    inputs=[task_dd, diff_dd, seed_tb],
+                    outputs=[output_md, error_md, kpi_df, reward_df, history_plot],
                 )
-                diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="medium", label="Difficulty")
-                seed_tb = gr.Textbox(value="42", label="Seed")
-                reset_btn = gr.Button("🔄 Reset Environment", variant="primary")
-
-                gr.Markdown("### 🎮 Step")
-                action_dd = gr.Dropdown(
-                    choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
-                             "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
-                             "inspect_actor", "audit_records", "request_policy_clarification"],
-                    value="analyze", label="Action"
+                step_btn.click(
+                    step_env,
+                    inputs=[action_dd, cols_tb, params_tb, reason_tb],
+                    outputs=[output_md, error_md, kpi_df, reward_df, history_plot],
                 )
-                cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status")
-                params_tb = gr.Textbox(label="Parameters (JSON)", value="{}", lines=2)
-                reason_tb = gr.Textbox(label="Reasoning", placeholder="Why this action?")
-                step_btn = gr.Button("▶️ Execute Step", variant="secondary")
 
-            with gr.Column(scale=2):
-                output_md = gr.Markdown("*Reset the environment to begin*")
-                error_md = gr.Markdown("")
+            with gr.Tab("Training Evidence"):
+                gr.Markdown("### Reward and Evaluation Evidence")
+                gr.Markdown("The following artifacts are committed outputs from training and evaluation.")
+                rp = _artifact_path("reward_progression.svg")
+                tc = _artifact_path("training_curve.svg")
+                flow = _artifact_path("world_model_flow.svg")
+                traj = _artifact_path("failure_success_trajectory.svg")
 
-        reset_btn.click(reset_env, inputs=[task_dd, diff_dd, seed_tb], outputs=[output_md, error_md])
-        step_btn.click(step_env, inputs=[action_dd, cols_tb, params_tb, reason_tb], outputs=[output_md, error_md])
+                if rp:
+                    gr.Image(value=rp, type="filepath", label="Reward Progression")
+                if tc:
+                    gr.Image(value=tc, type="filepath", label="Training Curve")
+                if flow:
+                    gr.Image(value=flow, type="filepath", label="World Model Flow")
+                if traj:
+                    gr.Image(value=traj, type="filepath", label="Failure vs Success Trajectory")
+
+                if not any([rp, tc, flow, traj]):
+                    gr.Markdown("No training artifacts found in artifacts/. Run training/evaluation scripts to generate them.")
 
     return demo
 
