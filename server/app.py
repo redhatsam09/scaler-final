@@ -536,23 +536,23 @@ def _build_gradio_demo():
         history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
 
         status_color = "#22c55e" if done else "#38bdf8"
-        status_text = "✅ Episode Complete" if done else f"📍 Step {obs.step_count}"
+        status_text = "EPISODE COMPLETE" if done else f"STEP {obs.step_count}"
         step_num = len(demo_session["history"])
         reward_color = "#22c55e" if reward.value > 0.05 else ("#ef4444" if reward.value < -0.01 else "#f59e0b")
 
         output = f"""<div style='padding: 18px; border-radius: 10px; background: #1e293b; color: #f8fafc; border-left: 5px solid {status_color}'>
-<h3 style='margin-top: 0; color: {status_color}'>{status_text}</h3>
+<h3 style='margin-top: 0; color: {status_color}; letter-spacing: 1px; font-size: 1.1em;'>{status_text}</h3>
 <div style='display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;'>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>🎯 <b>{action_type}</b></span>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em; color: {reward_color};'>💰 Reward: <b>{reward.value:.4f}</b></span>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>📊 Grade: <b>{grade:.4f}</b></span>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>🔢 Step {step_num}</span>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>ACTION: <b>{action_type}</b></span>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em; color: {reward_color};'>REWARD: <b>{reward.value:.4f}</b></span>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>GRADE: <b>{grade:.4f}</b></span>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>STEP {step_num}</span>
 </div>
 <hr style='border-color: #334155'>
 <p style='line-height: 1.6'><b>Observation:</b> {obs.natural_language_observation}</p>
-<p><b>⚠️ Urgency:</b><ul style='margin: 4px 0;'>{urgency}</ul></p>
-<p><b>💬 Actor Messages:</b><ul style='margin: 4px 0;'>{actors}</ul></p>
-<p style='margin-top: 10px; color: #94a3b8; font-size: 0.9em;'><b>History:</b> {history_text}</p>
+<p><b>Urgency Signals:</b><ul style='margin: 4px 0;'>{urgency}</ul></p>
+<p><b>Actor Messages:</b><ul style='margin: 4px 0;'>{actors}</ul></p>
+<p style='margin-top: 10px; color: #94a3b8; font-size: 0.9em;'><b>Action History:</b> {history_text}</p>
 </div>"""
         return output, "", kpi_rows, reward_rows, _history_figure()
 
@@ -565,65 +565,64 @@ def _build_gradio_demo():
         sequences = {
             "task_enterprise_orchestration": [
                 ("analyze", "", "{}", "Profile data quality before any changes",
-                 "🔍 STEP 1: Always analyze first — the agent inspects data quality metrics to plan its strategy."),
+                 "[1/7 ANALYZE] Always analyze first. The agent inspects data quality metrics to plan its strategy."),
                 ("inspect_actor", "account_id", '{"actor": "finance_bot"}', "Check finance bot trust before delegating",
-                 "👁️ STEP 2: Inspect actor trust — the agent checks if finance_bot is trustworthy BEFORE delegating work. This is the 'world model' — reasoning about hidden state."),
+                 "[2/7 INSPECT] The agent checks if finance_bot is trustworthy BEFORE delegating work. This is core world modeling — reasoning about hidden state."),
                 ("delegate", "account_id", '{"actor": "finance_bot", "objective": "invoice cleanup"}', "Delegate invoice work after confirming trust",
-                 "🤝 STEP 3: Delegate to trusted actor — now that trust is confirmed, the agent safely assigns invoice cleanup. Stochastic: the actor might push back!"),
+                 "[3/7 DELEGATE] Trust confirmed. The agent assigns invoice cleanup to finance_bot. Note: delegation is stochastic — the actor might push back."),
                 ("oversight_review", "account_id", '{"actor": "analytics_assistant", "explain": true}', "Detect deceptive recommendations from analytics assistant",
-                 "🕵️ STEP 4: Oversight review — the analytics_assistant may have suggested a shortcut that violates compliance. The agent detects deception here."),
+                 "[4/7 OVERSIGHT] The analytics_assistant may have recommended a compliance-violating shortcut. The agent runs an oversight review to detect deception."),
                 ("reconcile_apps", "account_id", '{"join_key": "account_id"}', "Fix cross-app data conflicts between CRM and Billing",
-                 "🔄 STEP 5: Reconcile apps — CRM, Billing, and Support data can disagree on the same account. The agent patches cross-system conflicts."),
+                 "[5/7 RECONCILE] CRM, Billing, and Support data can disagree on the same account. The agent patches cross-system conflicts."),
                 ("validate", "compliance_tier", '{"compliance_tier_type": "categorical_nonempty"}', "Validate after schema drift changed compliance rules",
-                 "✅ STEP 6: Validate after drift — schema drift may have added new compliance rules. The agent validates against the LATEST policy version."),
+                 "[6/7 VALIDATE] Schema drift may have introduced new compliance rules. The agent validates against the latest policy version."),
                 ("report_findings", "account_id", '{"include_summary": true, "include_quality_score": true, "include_recommendations": true}', "Final quality report with all improvements",
-                 "📋 STEP 7: Final report — the agent summarizes improvements. Report reward only fires if actual data quality improved (anti-gaming).")
+                 "[7/7 REPORT] Final report. Reward only fires if actual data quality improved — this prevents gaming via empty reports.")
             ],
             "task_missing_values": [
                 ("analyze", "", "{}", "Analyze dataset for missing values",
-                 "🔍 STEP 1: Analyze — profile which columns have missing values and how severe."),
+                 "[1/5 ANALYZE] Profile which columns have missing values and how severe the gaps are."),
                 ("impute", "email,phone", '{"method": "forward_fill"}', "Fill gaps in text columns using forward fill",
-                 "🔧 STEP 2: Impute text columns — forward_fill propagates last known value. The reward tracks missing value reduction."),
+                 "[2/5 IMPUTE] Forward-fill propagates the last known value. The reward tracks the reduction in missing values."),
                 ("impute", "lead_score", '{"method": "mean"}', "Fill numeric gaps using column mean",
-                 "🔧 STEP 3: Impute numeric columns — mean imputation for numeric fields preserves distribution."),
+                 "[3/5 IMPUTE] Mean imputation for numeric fields preserves the column distribution."),
                 ("validate", "email", "{}", "Validate cleaned data",
-                 "✅ STEP 4: Validate — check data types and constraints after imputation."),
+                 "[4/5 VALIDATE] Check data types and constraints after imputation."),
                 ("report_findings", "email", '{"include_summary": true, "include_quality_score": true}', "Report findings",
-                 "📋 STEP 5: Report — final summary. Quality score must exceed baseline or report earns reduced reward.")
+                 "[5/5 REPORT] Final summary. Quality score must exceed the baseline or the report earns reduced reward.")
             ],
             "task_duplicate_handling": [
                 ("analyze", "", "{}", "Profile duplicates in dataset",
-                 "🔍 STEP 1: Analyze — scan for duplicate records in the invoice dataset."),
+                 "[1/4 ANALYZE] Scan for duplicate records in the invoice dataset."),
                 ("deduplicate", "invoice_id", '{"subset": ["invoice_id"], "keep": "first"}', "Remove duplicates by invoice_id",
-                 "🗑️ STEP 2: Deduplicate — remove duplicate invoice records. Over-deletion is penalized!"),
+                 "[2/4 DEDUPLICATE] Remove duplicate invoice records. Note: over-deletion is penalized."),
                 ("validate", "invoice_id,amount", "{}", "Validate deduplication results",
-                 "✅ STEP 3: Validate — confirm no data corruption after deduplication."),
+                 "[3/4 VALIDATE] Confirm no data corruption occurred after deduplication."),
                 ("report_findings", "invoice_id", '{"include_summary": true, "include_quality_score": true}', "Report deduplication results",
-                 "📋 STEP 4: Report — document the deduplication outcome with quality metrics.")
+                 "[4/4 REPORT] Document the deduplication outcome with quality metrics.")
             ],
             "task_complex_validation": [
                 ("analyze", "", "{}", "Analyze complex validation requirements",
-                 "🔍 STEP 1: Analyze — understand the multi-constraint validation landscape."),
+                 "[1/6 ANALYZE] Understand the multi-constraint validation landscape."),
                 ("impute", "email,phone", '{"method": "forward_fill"}', "Fix missing values before validation",
-                 "🔧 STEP 2: Impute — fill gaps so validation rules can be properly checked."),
+                 "[2/6 IMPUTE] Fill gaps so validation rules can be properly checked."),
                 ("deduplicate", "account_id", '{"keep": "first"}', "Remove duplicate accounts",
-                 "🗑️ STEP 3: Deduplicate — clean duplicates before cross-app reconciliation."),
+                 "[3/6 DEDUPLICATE] Clean duplicates before cross-app reconciliation."),
                 ("reconcile_apps", "account_id", '{"join_key": "account_id"}', "Reconcile cross-app data",
-                 "🔄 STEP 4: Reconcile — align CRM, Billing, Support data for this account."),
+                 "[4/6 RECONCILE] Align CRM, Billing, Support data for this account."),
                 ("validate", "csat_score", '{"csat_score_type": "numeric", "csat_score_min": 1, "csat_score_max": 5}', "Validate with constraints",
-                 "✅ STEP 5: Validate — check numeric ranges, categorical constraints, and cross-field rules."),
+                 "[5/6 VALIDATE] Check numeric ranges, categorical constraints, and cross-field rules."),
                 ("report_findings", "account_id", '{"include_summary": true, "include_quality_score": true}', "Report validation results",
-                 "📋 STEP 6: Report — summarize all validation findings and quality improvement.")
+                 "[6/6 REPORT] Summarize all validation findings and quality improvement.")
             ]
         }
         
         seq = sequences.get(task_id, sequences["task_missing_values"])
         for action, cols, params, reasoning, narration in seq:
-            time.sleep(3.0)  # Slow pace so judges can read each step
+            time.sleep(3.0)
             out, err, kpi, rew, fig = step_env(action, cols, params, reasoning)
-            # Prepend narration banner to the output
             narration_html = f"""<div style='padding: 10px 14px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(135deg, #1e3a5f, #1e293b); border: 1px solid #38bdf8; color: #93c5fd; font-size: 0.95em;'>
-<b>🤖 Expert Agent Reasoning:</b> {narration}
+<b>AGENT REASONING:</b> {narration}
 </div>"""
             out = narration_html + out
             yield out, err, kpi, rew, fig
@@ -657,54 +656,60 @@ def _build_gradio_demo():
         panel_background_fill="#1e293b",
     )
 
-    with gr.Blocks(title="Enterprise Orchestration Environment", theme=premium_theme) as demo:
+    with gr.Blocks(title="Enterprise Orchestration Lab", theme=premium_theme) as demo:
         gr.HTML("""
         <div style="text-align: center; max-width: 800px; margin: 0 auto; padding: 20px 0;">
-            <h1 style="color: #38bdf8; font-size: 2.5em; margin-bottom: 10px;">🏢 Enterprise Orchestration RL Env</h1>
-            <p style="color: #94a3b8; font-size: 1.1em; line-height: 1.6;">
-                A multi-app RL environment testing <strong style="color:#f8fafc">World Modeling</strong>. 
-                Agents must navigate schema drift, actor conflicts, deceptive oversight, and economic budgets.
+            <h1 style="color: #38bdf8; font-size: 2.4em; margin-bottom: 10px; font-weight: 600; letter-spacing: -0.5px;">
+                <span style="display: inline-block; width: 36px; height: 36px; background: #2563eb; border-radius: 8px; text-align: center; line-height: 36px; font-size: 0.7em; color: #fff; vertical-align: middle; margin-right: 10px;">EO</span>
+                Enterprise Orchestration Lab
+            </h1>
+            <p style="color: #94a3b8; font-size: 1.05em; line-height: 1.6;">
+                A multi-app reinforcement learning environment for <strong style="color:#f8fafc">World Modeling</strong> (Theme 3.1).<br>
+                Agents navigate schema drift, actor conflicts, deceptive oversight, and economic budgets.
             </p>
         </div>
         """)
 
         with gr.Tabs():
-            with gr.Tab("🎮 Simulation Console"):
+            with gr.Tab("Simulation Console"):
                 with gr.Row():
                     with gr.Column(scale=1, variant="panel"):
-                        gr.Markdown("### 1️⃣ Initialize Session")
+                        gr.Markdown("### Configure Session")
                         task_dd = gr.Dropdown(
                             choices=["task_enterprise_orchestration", "task_missing_values",
                                      "task_duplicate_handling", "task_complex_validation"],
-                            value="task_enterprise_orchestration", label="Task Scenario"
+                            value="task_enterprise_orchestration", label="Task Scenario",
+                            info="Enterprise Orchestration is the flagship task with all dynamics"
                         )
                         with gr.Row():
                             diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="hard", label="Difficulty")
                             seed_tb = gr.Textbox(value="42", label="Random Seed")
                         
                         with gr.Row():
-                            reset_btn = gr.Button("🔄 Reset Environment", variant="primary")
-                            autoplay_btn = gr.Button("▶️ Auto-Play Expert Policy", variant="secondary")
+                            reset_btn = gr.Button("Reset Environment", variant="primary")
+                            autoplay_btn = gr.Button("Auto-Play Expert Policy", variant="secondary")
 
                         gr.Markdown("---")
-                        gr.Markdown("### 2️⃣ Execute Actions")
+                        gr.Markdown("### Execute Actions")
                         action_dd = gr.Dropdown(
                             choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
                                      "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
                                      "inspect_actor", "audit_records", "request_policy_clarification"],
                             value="analyze", label="Action Type", 
-                            info="Select an action to see smart presets"
+                            info="Selecting an action auto-fills recommended parameters below"
                         )
-                        cols_tb = gr.Textbox(label="Target Columns", placeholder="e.g., account_id, invoice_status")
+                        cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status, compliance_tier",
+                                            info="Column names from the dataset to apply this action to")
                         params_tb = gr.Code(label="Parameters (JSON)", value="{}", language="json", lines=3)
-                        reason_tb = gr.Textbox(label="Reasoning", placeholder="State why this action is appropriate")
-                        step_btn = gr.Button("⚡ Execute Step", variant="primary")
+                        reason_tb = gr.Textbox(label="Reasoning", placeholder="Explain why this action is appropriate given the current state",
+                                             info="Minimum 15 characters. Weak reasoning incurs a penalty.")
+                        step_btn = gr.Button("Execute Step", variant="primary")
                         
                         action_dd.change(preset_action, inputs=[action_dd], outputs=[cols_tb, params_tb, reason_tb])
 
                     with gr.Column(scale=2):
-                        gr.Markdown("### 📺 Terminal Output")
-                        output_html = gr.HTML("<div style='padding: 20px; text-align: center; color: #64748b; border: 1px dashed #334155; border-radius: 8px;'>Waiting for session initialization...</div>")
+                        gr.Markdown("### Environment Output")
+                        output_html = gr.HTML("<div style='padding: 20px; text-align: center; color: #64748b; border: 1px dashed #334155; border-radius: 8px;'>Click 'Reset Environment' or 'Auto-Play Expert Policy' to begin.</div>")
                         error_md = gr.Markdown("")
                         
                         with gr.Row():
@@ -740,8 +745,8 @@ def _build_gradio_demo():
                     outputs=[output_html, error_md, kpi_df, reward_df, history_plot],
                 )
 
-            with gr.Tab("📊 Training Evidence"):
-                gr.Markdown("### Observable Evidence of Training Progress\nThese artifacts were generated during actual GRPO + TRL training against the environment.")
+            with gr.Tab("Training Evidence"):
+                gr.Markdown("### Observable Evidence of Training Progress\nThese artifacts were generated during GRPO + TRL training against the environment.")
                 
                 with gr.Row():
                     with gr.Column():
