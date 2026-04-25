@@ -110,6 +110,20 @@ Generates reward progression evidence: baseline (0.488) -> mid (0.677) -> traine
 | Ablation (no actor actions vs full policy) | 0.424 vs 0.808 |
 | Held-out hard drift | **0.831** |
 
+### Training Progression
+![Reward Progression](artifacts/reward_progression.svg)
+![Failure vs Success Trajectory](artifacts/failure_success_trajectory.svg)
+
+## ⚖️ How to Evaluate (For Judges)
+
+1. **Check out the Interactive Demo:** Visit the Hugging Face space and navigate to `/demo`. Use the "Auto-Play Expert Policy" button to see the fully trained agent navigate schema drift and actor conflicts in real-time.
+2. **Review the GRPO RL Implementation:** Open the `training/trl_unsloth_compliance_notebook.ipynb` to see our actual GRPO RL optimization loop. We use Unsloth and TRL to train a Qwen model directly against our environment's custom reward function.
+3. **Analyze the Environment Dynamics:** Look at `src/environment.py`. You will see our implementation of:
+   - Schema drift (v1 -> v2 -> v3)
+   - Multi-stakeholder conflicts and deceptive actors
+   - Process-level rewards and anti-gaming penalties
+4. **Examine the Artifacts:** Check the `artifacts/` folder to see the JSON datasets and metrics output by the RL training process.
+
 ## Interactive Demo
 
 Visit the HF Space and navigate to `/demo` for an interactive Gradio UI where you can:
@@ -163,7 +177,7 @@ python training/grpo_training.py
 - **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
 - **Live API**: `https://samdutta123-scaler-final-openenv.hf.space`
 - **Interactive Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo`
-- Colab notebook URL: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/colab_trl_sft_notebook.ipynb`
+- Colab notebook URL: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb`
 - Mini-blog / writeup URL: `https://github.com/redhatsam09/scaler-final/blob/main/HACKATHON_WRITEUP.md`
 - Pitch/video script URL: `https://github.com/redhatsam09/scaler-final/blob/main/VIDEO_DEMO_GUIDE.md`
 

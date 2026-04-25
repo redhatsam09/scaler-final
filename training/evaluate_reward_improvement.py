@@ -233,6 +233,11 @@ def _write_trajectory_figure(ablation: Dict, heldout: Dict) -> None:
     heldout_score = heldout["average_score"]
 
     fig, ax = plt.subplots(figsize=(8, 4))
+    fig.patch.set_facecolor('#f8fafc')
+    ax.set_facecolor('#ffffff')
+    ax.grid(True, axis='y', linestyle='--', alpha=0.4, color='#94a3b8')
+    ax.set_axisbelow(True)
+    
     categories = ['No Actor Actions', 'Full Policy', 'Held-out Hard Drift']
     scores = [before, after, heldout_score]
     colors = ['#fca5a5', '#86efac', '#93c5fd']
@@ -240,17 +245,21 @@ def _write_trajectory_figure(ablation: Dict, heldout: Dict) -> None:
 
     bars = ax.bar(categories, scores, color=colors, edgecolor=edge_colors, linewidth=1.5, width=0.6)
     
-    ax.set_ylim(0, max(scores) + 0.1)
-    ax.set_ylabel('Grade')
-    ax.set_title('Failure Before / Success After Trajectory', fontweight='bold', pad=15)
+    ax.set_ylim(0, max(scores) + 0.15)
+    ax.set_ylabel('Mean Grade', fontweight='bold', color='#334155')
+    ax.set_title('Failure Before / Success After Trajectory', fontweight='bold', pad=15, fontsize=12, color='#0f172a')
+    
+    ax.tick_params(colors='#475569')
+    for spine in ax.spines.values():
+        spine.set_color('#cbd5e1')
     
     for bar in bars:
         height = bar.get_height()
         ax.annotate(f'{height:.3f}',
                     xy=(bar.get_x() + bar.get_width() / 2, height),
-                    xytext=(0, 3),  # 3 points vertical offset
+                    xytext=(0, 5),  # 5 points vertical offset
                     textcoords="offset points",
-                    ha='center', va='bottom', fontweight='bold')
+                    ha='center', va='bottom', fontweight='bold', color='#0f172a')
 
     # Add description text below
     plt.figtext(0.5, 0.02, 
@@ -260,6 +269,7 @@ def _write_trajectory_figure(ablation: Dict, heldout: Dict) -> None:
                 
     plt.tight_layout(rect=[0, 0.08, 1, 1])
     plt.savefig(str(TRAJECTORY_FIGURE_PATH))
+    plt.savefig(str(TRAJECTORY_FIGURE_PATH).replace('.svg', '.png'), dpi=300, bbox_inches='tight')
     plt.close()
 
 
@@ -270,25 +280,33 @@ def _write_svg(rows: List[Dict]) -> None:
 
     fig, ax = plt.subplots(figsize=(8, 4))
     
-    ax.errorbar(stages, means, yerr=stds, fmt='o-', color='#2563eb', 
-                linewidth=2, markersize=8, capsize=5, capthick=1.5)
+    # Modern styling
+    fig.patch.set_facecolor('#f8fafc')
+    ax.set_facecolor('#ffffff')
+    ax.grid(True, linestyle='--', alpha=0.4, color='#94a3b8')
     
-    ax.set_title('Reward Improvement: Baseline vs Mid vs Trained', fontweight='bold', pad=15)
-    ax.set_xlabel('Policy Stage')
-    ax.set_ylabel('Average Reward / Grade')
+    ax.errorbar(stages, means, yerr=stds, fmt='o-', color='#3b82f6', 
+                linewidth=2.5, markersize=10, capsize=5, capthick=1.5, markerfacecolor='#1d4ed8')
+    
+    ax.set_title('GRPO RL Reward Optimization Progression', fontweight='bold', pad=15, fontsize=12, color='#0f172a')
+    ax.set_xlabel('Training Stage (Epochs)', fontweight='bold', color='#334155')
+    ax.set_ylabel('Mean Episode Reward / Grade', fontweight='bold', color='#334155')
+    
+    ax.tick_params(colors='#475569')
+    for spine in ax.spines.values():
+        spine.set_color('#cbd5e1')
     
     # Add value annotations
     for i, (stage, mean) in enumerate(zip(stages, means)):
         ax.annotate(f'{mean:.3f}', 
                     xy=(stage, mean),
-                    xytext=(-5, 10),
+                    xytext=(-5, 12),
                     textcoords="offset points",
-                    ha='right', va='bottom', fontweight='bold', color='#2563eb')
+                    ha='right', va='bottom', fontweight='bold', color='#1d4ed8', fontsize=10)
                     
-    ax.grid(True, linestyle='--', alpha=0.6)
-    
     plt.tight_layout()
     plt.savefig(str(SVG_PATH))
+    plt.savefig(str(SVG_PATH).replace('.svg', '.png'), dpi=300, bbox_inches='tight')
     plt.close()
 
 

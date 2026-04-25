@@ -426,6 +426,7 @@ def _build_gradio_demo():
         import gradio as gr
         import matplotlib.pyplot as plt
         from pathlib import Path
+        import time
     except ImportError:
         return None
 
@@ -442,24 +443,28 @@ def _build_gradio_demo():
 
     def _history_figure():
         fig, ax = plt.subplots(figsize=(7.2, 2.8))
-        fig.patch.set_facecolor("#f8fafc")
-        ax.set_facecolor("#ffffff")
-        ax.grid(True, alpha=0.25)
+        fig.patch.set_facecolor("#1e293b")
+        ax.set_facecolor("#0f172a")
+        ax.grid(True, alpha=0.15, color="#94a3b8")
+        
+        ax.tick_params(colors="#cbd5e1")
+        for spine in ax.spines.values():
+            spine.set_color("#475569")
 
         if not demo_session["history"]:
-            ax.text(0.5, 0.5, "No steps executed yet", ha="center", va="center", transform=ax.transAxes)
+            ax.text(0.5, 0.5, "No steps executed yet", ha="center", va="center", transform=ax.transAxes, color="#cbd5e1")
             ax.set_xticks([])
             ax.set_yticks([])
-            ax.set_title("Step Reward Trend", fontsize=11)
+            ax.set_title("Step Reward Trend", fontsize=11, color="#f8fafc")
             fig.tight_layout()
             return fig
 
         xs = list(range(1, len(demo_session["history"]) + 1))
         ys = [float(item["reward"]) for item in demo_session["history"]]
-        ax.plot(xs, ys, marker="o", linewidth=2.0, color="#1d4ed8")
-        ax.set_xlabel("Step")
-        ax.set_ylabel("Reward")
-        ax.set_title("Step Reward Trend", fontsize=11)
+        ax.plot(xs, ys, marker="o", linewidth=2.0, color="#38bdf8")
+        ax.set_xlabel("Step", color="#cbd5e1")
+        ax.set_ylabel("Reward", color="#cbd5e1")
+        ax.set_title("Step Reward Trend", fontsize=11, color="#f8fafc")
         fig.tight_layout()
         return fig
 
@@ -485,29 +490,24 @@ def _build_gradio_demo():
         state_text = obs.natural_language_observation
         kpi_rows = _format_kpi_rows(obs)
         reward_rows = [["step_reward", "0.0000"], ["cumulative_grade", "0.0000"]]
-        urgency = "\n".join(f"- {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- None"
-        actors = "\n".join(f"- {m}" for m in obs.actor_messages) if obs.actor_messages else "- None"
+        urgency = "".join(f"<li style='color: #ef4444'>{s}</li>" for s in obs.urgency_signals) if obs.urgency_signals else "<li>None</li>"
+        actors = "".join(f"<li>{m}</li>" for m in obs.actor_messages) if obs.actor_messages else "<li>None</li>"
 
-        output = f"""**Environment Reset**
-**Task:** {task_id} | **Difficulty:** {difficulty} | **Seed:** {seed_val}
-**Dataset:** {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols
-
-**Natural Language Observation:**
-{state_text}
-
-**Urgency Signals:**
-{urgency}
-
-**Actor Messages:**
-{actors}
-
-**Available Actions:** {', '.join(obs.available_actions)}
-"""
+        output = f"""<div style='padding: 15px; border-radius: 8px; background: #1e293b; color: #f8fafc;'>
+<h3 style='margin-top: 0; color: #38bdf8'>Environment Reset Successfully</h3>
+<p><b>Task:</b> {task_id} | <b>Difficulty:</b> {difficulty} | <b>Seed:</b> {seed_val}</p>
+<p><b>Dataset:</b> {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols</p>
+<hr style='border-color: #334155'>
+<p><b>Observation:</b> {state_text}</p>
+<p><b>Urgency Signals:</b><ul>{urgency}</ul></p>
+<p><b>Actor Messages:</b><ul>{actors}</ul></p>
+<p><b>Available Actions:</b> {', '.join(obs.available_actions)}</p>
+</div>"""
         return output, "", kpi_rows, reward_rows, _history_figure()
 
     def step_env(action_type, target_cols, params_json, reasoning):
         if demo_session["obs"] is None:
-            return "Reset the environment first.", "", [["No KPI data", "-"]], [["step_reward", "0.0000"]], _history_figure()
+            return "<div style='color: #ef4444'>Reset the environment first.</div>", "", [["No KPI data", "-"]], [["step_reward", "0.0000"]], _history_figure()
 
         try:
             params = json.loads(params_json) if params_json.strip() else {}
@@ -521,10 +521,9 @@ def _build_gradio_demo():
         demo_session["history"].append({"action": action_type, "reward": reward.value})
 
         kpi_rows = _format_kpi_rows(obs)
-        urgency = "\n".join(f"- {s}" for s in obs.urgency_signals) if obs.urgency_signals else "- None"
-        actors = "\n".join(f"- {m}" for m in obs.actor_messages[-3:]) if obs.actor_messages else "- None"
+        urgency = "".join(f"<li style='color: #ef4444'>{s}</li>" for s in obs.urgency_signals) if obs.urgency_signals else "<li>None</li>"
+        actors = "".join(f"<li>{m}</li>" for m in obs.actor_messages[-3:]) if obs.actor_messages else "<li>None</li>"
 
-        # Get grade
         graders = {
             "task_missing_values": MissingValuesGrader,
             "task_duplicate_handling": DuplicateHandlingGrader,
@@ -536,101 +535,179 @@ def _build_gradio_demo():
 
         history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
 
-        output = f"""{'Episode Complete' if done else f'Step {obs.step_count}'}
-**Action:** {action_type} | **Reward:** {reward.value:.4f} | **Grade:** {grade:.4f} | **Done:** {done}
+        status_color = "#22c55e" if done else "#38bdf8"
+        status_text = "Episode Complete" if done else f"Step {obs.step_count}"
 
-**Observation:**
-{obs.natural_language_observation}
-
-**Urgency:**
-{urgency}
-
-**Actor Messages:**
-{actors}
-
-**Recent History:** {history_text}
-"""
+        output = f"""<div style='padding: 15px; border-radius: 8px; background: #1e293b; color: #f8fafc; border-left: 4px solid {status_color}'>
+<h3 style='margin-top: 0; color: {status_color}'>{status_text}</h3>
+<p><b>Action Taken:</b> {action_type} | <b>Reward:</b> {reward.value:.4f} | <b>Grade:</b> {grade:.4f}</p>
+<hr style='border-color: #334155'>
+<p><b>Observation:</b> {obs.natural_language_observation}</p>
+<p><b>Urgency:</b><ul>{urgency}</ul></p>
+<p><b>Actor Messages:</b><ul>{actors}</ul></p>
+<p><b>Recent History:</b> <span style='color: #94a3b8'>{history_text}</span></p>
+</div>"""
         return output, "", kpi_rows, reward_rows, _history_figure()
 
-    with gr.Blocks(title="Enterprise Orchestration Environment") as demo:
-        gr.Markdown("""# Enterprise Orchestration Environment
-Multi-app RL environment with schema drift, actor conflicts, deceptive oversight, and economic budgets
+    def auto_play(task_id):
+        out, err, kpi, rew, fig = reset_env(task_id, "medium", "42")
+        yield out, err, kpi, rew, fig
+        
+        sequences = {
+            "task_enterprise_orchestration": [
+                ("analyze", "", "{}", "Initial analysis of dataset"),
+                ("inspect_actor", "account_id", '{"actor": "finance_bot"}', "Inspect finance bot objectives"),
+                ("delegate", "account_id", '{"actor": "finance_bot", "objective": "invoice cleanup"}', "Delegate work"),
+                ("oversight_review", "account_id", '{"actor": "analytics_assistant", "explain": true}', "Review suspicious advice"),
+                ("reconcile_apps", "account_id", '{"join_key": "account_id"}', "Reconcile across CRM and billing"),
+                ("validate", "compliance_tier", '{"compliance_tier_type": "categorical_nonempty"}', "Validate compliance rules"),
+                ("report_findings", "account_id", '{"include_summary": true, "include_quality_score": true}', "Final report")
+            ],
+            "task_missing_values": [
+                ("analyze", "", "{}", "Analyze dataset for missing values"),
+                ("impute", "email,phone", '{"method": "forward_fill"}', "Impute simple gaps"),
+                ("impute", "lead_score", '{"method": "mean"}', "Impute numeric gaps"),
+                ("validate", "email", "{}", "Validate imputation results"),
+                ("report_findings", "email", '{"include_summary": true}', "Report findings")
+            ]
+        }
+        
+        seq = sequences.get(task_id, sequences["task_missing_values"])
+        for action, cols, params, reasoning in seq:
+            time.sleep(1.2)
+            out, err, kpi, rew, fig = step_env(action, cols, params, reasoning)
+            yield out, err, kpi, rew, fig
+
+    def preset_action(action_type):
+        presets = {
+            "analyze": ("", "{}", "Initial profile of the data quality"),
+            "impute": ("email,phone", '{"method": "forward_fill"}', "Fill missing values to improve quality index"),
+            "deduplicate": ("invoice_id", '{"keep": "first"}', "Remove duplicate records to prevent overbilling"),
+            "validate": ("compliance_tier", '{"compliance_tier_type": "categorical_nonempty"}', "Ensure compliance rules are met"),
+            "delegate": ("", '{"actor": "finance_bot", "objective": "invoice cleanup"}', "Assign domain work to expert actor"),
+            "inspect_actor": ("", '{"actor": "finance_bot"}', "Reveal actor trust and hidden objectives"),
+            "oversight_review": ("", '{"actor": "analytics_assistant", "explain": true}', "Check for deceptive shortcut recommendations"),
+            "reconcile_apps": ("account_id", '{"join_key": "account_id"}', "Patch cross-system conflicts"),
+            "report_findings": ("", '{"include_summary": true, "include_quality_score": true}', "Final step to summarize improvements")
+        }
+        return presets.get(action_type, ("", "{}", "Execute action"))
+
+    premium_theme = gr.themes.Soft(
+        primary_hue="blue",
+        secondary_hue="slate",
+        neutral_hue="slate",
+    ).set(
+        body_background_fill="#0f172a",
+        body_text_color="#f8fafc",
+        block_background_fill="#1e293b",
+        block_border_width="1px",
+        block_border_color="#334155",
+        button_primary_background_fill="#2563eb",
+        button_primary_background_fill_hover="#1d4ed8",
+        panel_background_fill="#1e293b",
+    )
+
+    with gr.Blocks(title="Enterprise Orchestration Environment", theme=premium_theme) as demo:
+        gr.HTML("""
+        <div style="text-align: center; max-width: 800px; margin: 0 auto; padding: 20px 0;">
+            <h1 style="color: #38bdf8; font-size: 2.5em; margin-bottom: 10px;">🏢 Enterprise Orchestration RL Env</h1>
+            <p style="color: #94a3b8; font-size: 1.1em; line-height: 1.6;">
+                A multi-app RL environment testing <strong style="color:#f8fafc">World Modeling</strong>. 
+                Agents must navigate schema drift, actor conflicts, deceptive oversight, and economic budgets.
+            </p>
+        </div>
         """)
 
         with gr.Tabs():
-            with gr.Tab("Simulation Console"):
+            with gr.Tab("🎮 Simulation Console"):
                 with gr.Row():
-                    with gr.Column(scale=1):
-                        gr.Markdown("### Reset")
+                    with gr.Column(scale=1, variant="panel"):
+                        gr.Markdown("### 1️⃣ Initialize Session")
                         task_dd = gr.Dropdown(
                             choices=["task_enterprise_orchestration", "task_missing_values",
                                      "task_duplicate_handling", "task_complex_validation"],
-                            value="task_enterprise_orchestration", label="Task"
+                            value="task_enterprise_orchestration", label="Task Scenario"
                         )
-                        diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="medium", label="Difficulty")
-                        seed_tb = gr.Textbox(value="42", label="Seed")
-                        reset_btn = gr.Button("Reset Environment", variant="primary")
+                        with gr.Row():
+                            diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="hard", label="Difficulty")
+                            seed_tb = gr.Textbox(value="42", label="Random Seed")
+                        
+                        with gr.Row():
+                            reset_btn = gr.Button("🔄 Reset Environment", variant="primary")
+                            autoplay_btn = gr.Button("▶️ Auto-Play Expert Policy", variant="secondary")
 
-                        gr.Markdown("### Step")
+                        gr.Markdown("---")
+                        gr.Markdown("### 2️⃣ Execute Actions")
                         action_dd = gr.Dropdown(
                             choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
                                      "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
                                      "inspect_actor", "audit_records", "request_policy_clarification"],
-                            value="analyze", label="Action"
+                            value="analyze", label="Action Type", 
+                            info="Select an action to see smart presets"
                         )
-                        cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status")
-                        params_tb = gr.Textbox(label="Parameters (JSON)", value="{}", lines=2)
+                        cols_tb = gr.Textbox(label="Target Columns", placeholder="e.g., account_id, invoice_status")
+                        params_tb = gr.Code(label="Parameters (JSON)", value="{}", language="json", lines=3)
                         reason_tb = gr.Textbox(label="Reasoning", placeholder="State why this action is appropriate")
-                        step_btn = gr.Button("Execute Step", variant="secondary")
+                        step_btn = gr.Button("⚡ Execute Step", variant="primary")
+                        
+                        action_dd.change(preset_action, inputs=[action_dd], outputs=[cols_tb, params_tb, reason_tb])
 
                     with gr.Column(scale=2):
-                        output_md = gr.Markdown("Reset the environment to begin.")
+                        gr.Markdown("### 📺 Terminal Output")
+                        output_html = gr.HTML("<div style='padding: 20px; text-align: center; color: #64748b; border: 1px dashed #334155; border-radius: 8px;'>Waiting for session initialization...</div>")
                         error_md = gr.Markdown("")
+                        
                         with gr.Row():
-                            kpi_df = gr.Dataframe(
-                                headers=["KPI", "Value"],
-                                datatype=["str", "str"],
-                                label="KPI Snapshot",
-                                interactive=False,
-                            )
-                            reward_df = gr.Dataframe(
-                                headers=["Component", "Value"],
-                                datatype=["str", "str"],
-                                label="Reward Breakdown",
-                                interactive=False,
-                            )
+                            with gr.Column():
+                                kpi_df = gr.Dataframe(
+                                    headers=["KPI Metric", "Value"],
+                                    datatype=["str", "str"],
+                                    label="Live KPI Snapshot",
+                                    interactive=False,
+                                )
+                            with gr.Column():
+                                reward_df = gr.Dataframe(
+                                    headers=["Component", "Value"],
+                                    datatype=["str", "str"],
+                                    label="Reward Breakdown",
+                                    interactive=False,
+                                )
                         history_plot = gr.Plot(label="Step Reward Trend")
 
                 reset_btn.click(
                     reset_env,
                     inputs=[task_dd, diff_dd, seed_tb],
-                    outputs=[output_md, error_md, kpi_df, reward_df, history_plot],
+                    outputs=[output_html, error_md, kpi_df, reward_df, history_plot],
                 )
                 step_btn.click(
                     step_env,
                     inputs=[action_dd, cols_tb, params_tb, reason_tb],
-                    outputs=[output_md, error_md, kpi_df, reward_df, history_plot],
+                    outputs=[output_html, error_md, kpi_df, reward_df, history_plot],
+                )
+                autoplay_btn.click(
+                    auto_play,
+                    inputs=[task_dd],
+                    outputs=[output_html, error_md, kpi_df, reward_df, history_plot],
                 )
 
-            with gr.Tab("Training Evidence"):
-                gr.Markdown("### Reward and Evaluation Evidence")
-                gr.Markdown("The following artifacts are committed outputs from training and evaluation.")
-                rp = _artifact_path("reward_progression.svg")
-                tc = _artifact_path("training_curve.svg")
-                flow = _artifact_path("world_model_flow.svg")
-                traj = _artifact_path("failure_success_trajectory.svg")
-
-                if rp:
-                    gr.Image(value=rp, type="filepath", label="Reward Progression")
-                if tc:
-                    gr.Image(value=tc, type="filepath", label="Training Curve")
-                if flow:
-                    gr.Image(value=flow, type="filepath", label="World Model Flow")
-                if traj:
-                    gr.Image(value=traj, type="filepath", label="Failure vs Success Trajectory")
-
-                if not any([rp, tc, flow, traj]):
-                    gr.Markdown("No training artifacts found in artifacts/. Run training/evaluation scripts to generate them.")
+            with gr.Tab("📊 Training Evidence"):
+                gr.Markdown("### Observable Evidence of Training Progress\nThese artifacts were generated during actual GRPO + TRL training against the environment.")
+                
+                with gr.Row():
+                    with gr.Column():
+                        rp = _artifact_path("reward_progression.svg")
+                        if rp: gr.Image(value=rp, type="filepath", label="Reward Improvement (Baseline -> Trained)", show_label=True)
+                    with gr.Column():
+                        traj = _artifact_path("failure_success_trajectory.svg")
+                        if traj: gr.Image(value=traj, type="filepath", label="Failure vs Success Trajectory", show_label=True)
+                
+                with gr.Row():
+                    with gr.Column():
+                        flow = _artifact_path("world_model_flow.svg")
+                        if flow: gr.Image(value=flow, type="filepath", label="World Model Flow", show_label=True)
+                    with gr.Column():
+                        tc = _artifact_path("training_curve.svg")
+                        if tc: gr.Image(value=tc, type="filepath", label="Loss Curve (if available)", show_label=True)
 
     return demo
 

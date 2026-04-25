@@ -39,3 +39,5 @@ htmlcov/
 .ipynb_checkpoints/
 artifacts/trl_sft_checkpoint/
 .codex
+# Binary image files (HF Spaces uses Xet for these)
+artifacts/*.png

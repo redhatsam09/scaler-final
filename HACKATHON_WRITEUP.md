@@ -1,101 +1,122 @@
-# OpenEnv Hackathon Writeup
+# 🏢 OpenEnv Hackathon Writeup
+## Enterprise Orchestration RL Environment — Theme #3.1 World Modeling
+
+---
 
 ## Problem and Capability Gap
 
-General LLM tool-use agents still struggle with enterprise workflows where objectives conflict, policies drift mid-task, and local shortcuts can hurt global KPIs. We target this gap with a world-modeling environment that forces multi-step decision making under partial observability.
+General LLM tool-use agents still struggle with enterprise workflows where objectives conflict, policies drift mid-task, and local shortcuts can hurt global KPIs.
+
+**The gap:** Current agents can call tools in a predefined script but cannot:
+- Model hidden actor incentives and detect deception
+- Adapt strategy when compliance policies shift mid-episode
+- Balance competing KPIs under an economic budget
+
+We close this gap with a **world-modeling environment** that forces multi-step decision making under partial observability.
+
+---
 
 ## Environment Summary
 
-This environment simulates CRM, Billing, and Support coordination with:
+This environment simulates CRM, Billing, and Support coordination across 4 tasks of increasing complexity. The flagship task (`task_enterprise_orchestration`) includes:
 
-- Hidden actor trust and incentive conflicts
-- Stochastic delegation outcomes and pushback handling
-- Mid-episode policy/schema drift (v1 -> v2 -> v3)
-- Deceptive recommendations requiring oversight checks
-- Explicit economic budgets and action costs
-- Natural-language observations and urgency signals
+| Feature | Description |
+|---------|-------------|
+| 🎭 **5 Actors with Hidden Incentives** | finance_bot, support_lead, sales_ops, compliance_officer, analytics_assistant |
+| 🕵️ **Deceptive Recommendations** | analytics_assistant may suggest KPI shortcuts detectable only via `oversight_review` |
+| 🔄 **Schema Drift (v1→v2→v3)** | Mid-episode field renames, new compliance tiers, evolving T&C |
+| 💰 **Economic Budget** | Each action costs budget; overflow is penalized |
+| 🔒 **Stochastic Delegation** | Actor pushback probability depends on hidden trust score |
+| 👁️ **Partial Observability** | Agent only sees surface-level KPI snapshots, not hidden state |
+
+---
 
 ## Agent Interface
 
-Actions available to the agent:
+The agent has access to **12 actions**:
+`analyze`, `impute`, `deduplicate`, `validate`, `report_findings`, `delegate`, `resolve_alert`, `reconcile_apps`, `oversight_review`, `inspect_actor`, `audit_records`, `request_policy_clarification`
 
-- analyze
-- impute
-- deduplicate
-- validate
-- report_findings
-- delegate
-- resolve_alert
-- reconcile_apps
-- oversight_review
-- inspect_actor
-- audit_records
-- request_policy_clarification
+Optimal policy for the enterprise task requires:
+1. **Inspect-before-delegate** — check actor trust before assigning work
+2. **Oversight-before-report** — detect and flag deceptive advice
+3. **Clarify-after-drift** — request T&C updates when schema drift is detected
+4. **Reconcile-cross-app** — resolve CRM↔Billing↔Support mismatches
 
-The environment follows OpenEnv-compatible reset/step/state patterns and is exposed through FastAPI.
+---
 
 ## Reward and Anti-Gaming Strategy
 
-Reward is a weighted combination of:
+Reward is a multi-component signal:
 
-- Action-specific utility
-- Progress signal on missing values and duplicates
-- Process bonuses for robust sequencing
-- Economic efficiency
+**Positive:**
+- Action-specific utility (imputation reduces missing values, delegation succeeds)
+- Process bonuses for smart sequencing (analyze-first, inspect-before-delegate)
+- Economic efficiency bonuses
 
-Penalties include:
-
-- Invalid action penalties
-- Loop penalties
+**Negative (anti-gaming):**
+- Loop penalties for repeating the same action
 - Budget overflow penalties
-- Adaptive stale-strategy penalties after policy drift
-- Reasoning-quality penalties for underspecified decisions
+- Stale-strategy penalties after policy drift (persist until drift-aware actions executed)
+- Reasoning-quality penalties for underspecified actions
+- Clarification reward paid only **once per policy version** (no spam farming)
+- Report reward requires actual data improvement (no free points for empty reports)
 
-Anti-hacking guardrails:
-
-- Clarification reward is paid only once per policy version
-- Drift penalties continue until drift-aware actions are taken
-- Reporting reward requires actual data-quality improvement
+---
 
 ## Training Pipeline
 
-- GRPO script: training/grpo_training.py
-- Environment-grounded policy search: training/trl_sft_training.py
-- Reward progression and ablations: training/evaluate_reward_improvement.py
+Our RL training uses **GRPO (Group Relative Policy Optimization)** via TRL + Unsloth:
 
-Local validation and artifact refresh:
+1. **Environment generates state observations** → Natural language prompts fed to the model
+2. **Model generates 4 candidate actions** per prompt
+3. **Each action runs through `env.step(action)`** — verifiable reward from the environment
+4. **Reward = 0.6 × step_reward + 0.4 × episode_grade + 0.1 × format_bonus**
+5. **GRPO updates the policy** to prefer actions yielding higher expected reward
+
+| Training File | Purpose |
+|--------------|---------|
+| `training/grpo_training.py` | Main GRPO training loop |
+| `training/trl_unsloth_compliance_notebook.ipynb` | Colab-ready notebook with Unsloth |
+| `training/trl_sft_training.py` | Policy search baseline |
+| `training/evaluate_reward_improvement.py` | Evaluation + artifact generation |
 
 ```bash
+# Local validation and artifact refresh
 ./scripts/run_local_checks.sh
 ```
 
+---
+
 ## Results
 
-From artifacts/reward_progression.json:
+### Reward Progression (5-seed mean)
 
-- Baseline: 0.488
-- Mid: 0.677
-- Trained: 0.701
-- Improvement: +0.214 (+43.8%)
+| Stage | Score | Δ vs Baseline |
+|-------|-------|---------------|
+| Baseline (random policy) | 0.488 | — |
+| Mid-training | 0.677 | +0.189 (+38.7%) |
+| **Trained** | **0.701** | **+0.214 (+43.8%)** |
 
-From artifacts/ablation_no_actor_actions.json:
+### Ablation Study — Actor-Facing Actions Matter
 
-- Full policy (enterprise task): 0.808
-- Without actor-facing actions: 0.424
-- Delta: +0.384
+| Policy | Enterprise Score |
+|--------|-----------------|
+| Full policy (all 12 actions) | 0.808 |
+| Ablated (no actor actions) | 0.424 |
+| **Δ from actor actions** | **+0.384** |
 
-From artifacts/heldout_drift_scenario.json:
+### Generalization — Held-out Hard Drift Scenario
 
-- Held-out hard drift score: 0.831
+> Score: **0.831** on unseen episodes with hard-mode drift, deception, and tighter budget.
+
+---
 
 ## Reproducibility and Deployment
 
-- API server: server/app.py
-- OpenEnv manifest: openenv.yaml
+- API server: `server/app.py`
+- OpenEnv manifest: `openenv.yaml`
 - Dockerized Space deployment supported
-- Token-only deployment script: scripts/deploy_hf_space.sh
-
-Deploy command:
+- Token-only deployment script: `scripts/deploy_hf_space.sh`
 
 ```bash
 export HF_TOKEN="<your_hf_write_token>"
