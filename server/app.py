@@ -645,15 +645,6 @@ def _build_gradio_demo():
         primary_hue="blue",
         secondary_hue="slate",
         neutral_hue="slate",
-    ).set(
-        body_background_fill="#0f172a",
-        body_text_color="#f8fafc",
-        block_background_fill="#1e293b",
-        block_border_width="1px",
-        block_border_color="#334155",
-        button_primary_background_fill="#2563eb",
-        button_primary_background_fill_hover="#1d4ed8",
-        panel_background_fill="#1e293b",
     )
 
     with gr.Blocks(title="Enterprise Orchestration Lab", theme=premium_theme) as demo:
@@ -663,26 +654,35 @@ def _build_gradio_demo():
                 <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>
                 </div>
-                <h1 style="color: #f8fafc; font-size: 2.2em; margin: 0; font-weight: 700; letter-spacing: -0.5px;">Enterprise Orchestration Lab</h1>
+                <h1 style="color: var(--body-text-color); font-size: 2.2em; margin: 0; font-weight: 700; letter-spacing: -0.5px;">Enterprise Orchestration Lab</h1>
             </div>
-            <p style="color: #94a3b8; font-size: 1.0em; line-height: 1.7; max-width: 700px; margin: 0 auto;">
-                A multi-system RL environment for <strong style="color:#38bdf8">World Modeling</strong> (Theme 3.1).
+            <p style="color: var(--body-text-color-subdued); font-size: 1.0em; line-height: 1.7; max-width: 700px; margin: 0 auto;">
+                A multi-system RL environment for <strong style="color:var(--color-accent)">World Modeling</strong> (Theme 3.1).
                 Agents manage CRM, Billing, and Support while navigating schema drift, actor conflicts, deceptive oversight, and economic budgets.
             </p>
             <div style="display: flex; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
-                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">REINFORCE Policy Gradient</span>
-                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">Qwen 2.5-1.5B + LoRA</span>
-                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">4-bit NF4 Quantization</span>
-                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">Environment-Grounded Rewards</span>
+                <span style="background: var(--background-fill-secondary); color: var(--color-accent); padding: 4px 12px; border-radius: 20px; font-size: 0.8em; border: 1px solid var(--border-color-primary);">REINFORCE Policy Gradient</span>
+                <span style="background: var(--background-fill-secondary); color: var(--color-accent); padding: 4px 12px; border-radius: 20px; font-size: 0.8em; border: 1px solid var(--border-color-primary);">Qwen 2.5-1.5B + LoRA</span>
+                <span style="background: var(--background-fill-secondary); color: var(--color-accent); padding: 4px 12px; border-radius: 20px; font-size: 0.8em; border: 1px solid var(--border-color-primary);">4-bit NF4 Quantization</span>
+                <span style="background: var(--background-fill-secondary); color: var(--color-accent); padding: 4px 12px; border-radius: 20px; font-size: 0.8em; border: 1px solid var(--border-color-primary);">Environment-Grounded Rewards</span>
             </div>
         </div>
         """)
 
         with gr.Tabs():
             with gr.Tab("Simulation Console"):
+                gr.HTML("""
+                <div style='background: var(--background-fill-secondary); border: 1px solid var(--border-color-primary); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;'>
+                    <strong style='color: var(--body-text-color);'>Quick Start:</strong>
+                    <span style='color: var(--body-text-color-subdued); font-size: 0.9em;'>1️⃣ Click <b>Reset Environment</b></span> <span style='color: var(--color-accent);'>→</span>
+                    <span style='color: var(--body-text-color-subdued); font-size: 0.9em;'>2️⃣ Check <b>Environment Output</b> state</span> <span style='color: var(--color-accent);'>→</span>
+                    <span style='color: var(--body-text-color-subdued); font-size: 0.9em;'>3️⃣ Pick <b>Action Type</b> (Params auto-fill! 🎯)</span> <span style='color: var(--color-accent);'>→</span>
+                    <span style='color: var(--body-text-color-subdued); font-size: 0.9em;'>4️⃣ Write <b>Reasoning</b> & Execute Step!</span>
+                </div>
+                """)
                 with gr.Row():
                     with gr.Column(scale=1, variant="panel"):
-                        gr.HTML("<h3 style='color:#f8fafc; margin:0 0 8px;'>Session Configuration</h3>")
+                        gr.HTML("<h3 style='color:var(--body-text-color); margin:0 0 8px;'>Session Configuration</h3>")
                         task_dd = gr.Dropdown(
                             choices=["task_enterprise_orchestration", "task_missing_values",
                                      "task_duplicate_handling", "task_complex_validation"],
@@ -696,10 +696,10 @@ def _build_gradio_demo():
                         with gr.Row():
                             reset_btn = gr.Button("Reset Environment", variant="primary", size="lg")
                             autoplay_btn = gr.Button("Watch Expert Policy", variant="secondary", size="lg")
-                        gr.HTML("<p style='color:#64748b; font-size:0.82em; margin:4px 0 0;'>Expert Policy runs a 7-step narrated demo showing optimal agent reasoning.</p>")
+                        gr.HTML("<p style='color:var(--body-text-color-subdued); font-size:0.82em; margin:4px 0 0;'>Expert Policy runs a 7-step narrated demo showing optimal agent reasoning.</p>")
 
-                        gr.HTML("<hr style='border-color:#334155; margin:14px 0;'>")
-                        gr.HTML("<h3 style='color:#f8fafc; margin:0 0 8px;'>Manual Action Execution</h3>")
+                        gr.HTML("<hr style='border-color:var(--border-color-primary); margin:14px 0;'>")
+                        gr.HTML("<h3 style='color:var(--body-text-color); margin:0 0 8px;'>Manual Action Execution</h3>")
                         action_dd = gr.Dropdown(
                             choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
                                      "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
@@ -717,10 +717,10 @@ def _build_gradio_demo():
                         action_dd.change(preset_action, inputs=[action_dd], outputs=[cols_tb, params_tb, reason_tb])
 
                     with gr.Column(scale=2):
-                        gr.HTML("<h3 style='color:#f8fafc; margin:0 0 8px;'>Environment Output</h3>")
-                        output_html = gr.HTML("""<div style='padding: 30px; text-align: center; color: #64748b; border: 1px dashed #334155; border-radius: 10px; background: #0f172a;'>
-                            <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='#475569' stroke-width='1.5' style='margin-bottom:10px'><circle cx='12' cy='12' r='10'/><path d='M12 8v4l3 3'/></svg>
-                            <p style='margin:0; font-size:1.05em;'>Click <b style='color:#38bdf8'>Reset Environment</b> to start a session or <b style='color:#94a3b8'>Watch Expert Policy</b> for a narrated demo.</p>
+                        gr.HTML("<h3 style='color:var(--body-text-color); margin:0 0 8px;'>Environment Output</h3>")
+                        output_html = gr.HTML("""<div style='padding: 30px; text-align: center; color: var(--body-text-color-subdued); border: 1px dashed var(--border-color-primary); border-radius: 10px; background: var(--background-fill-secondary);'>
+                            <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' style='margin-bottom:10px'><circle cx='12' cy='12' r='10'/><path d='M12 8v4l3 3'/></svg>
+                            <p style='margin:0; font-size:1.05em;'>Click <b style='color:var(--color-accent)'>Reset Environment</b> to start a session or <b>Watch Expert Policy</b> for a narrated demo.</p>
                         </div>""")
                         error_md = gr.Markdown("")
                         
@@ -759,11 +759,11 @@ def _build_gradio_demo():
                 )
 
             with gr.Tab("Training Evidence"):
-                gr.HTML("""<div style='padding:16px; background:#0f172a; border-radius:10px; margin-bottom:12px;'>
-                    <h3 style='color:#f8fafc; margin:0 0 8px;'>Training Pipeline Evidence</h3>
-                    <p style='color:#94a3b8; margin:0; line-height:1.6;'>
-                        Model trained with <b style='color:#38bdf8'>REINFORCE policy gradient</b> on Qwen 2.5-1.5B-Instruct (4-bit NF4 + LoRA).
-                        Each step generates a JSON action, runs it through <code style='background:#1e293b; padding:2px 6px; border-radius:4px;'>env.step()</code>,
+                gr.HTML("""<div style='padding:16px; background:var(--background-fill-secondary); border-radius:10px; margin-bottom:12px; border:1px solid var(--border-color-primary);'>
+                    <h3 style='color:var(--body-text-color); margin:0 0 8px;'>Training Pipeline Evidence</h3>
+                    <p style='color:var(--body-text-color-subdued); margin:0; line-height:1.6;'>
+                        Model trained with <b style='color:var(--color-accent)'>REINFORCE policy gradient</b> on Qwen 2.5-1.5B-Instruct (4-bit NF4 + LoRA).
+                        Each step generates a JSON action, runs it through <code style='background:var(--background-fill-primary); padding:2px 6px; border-radius:4px; border:1px solid var(--border-color-primary);'>env.step()</code>,
                         and uses the environment reward as the training signal. No proxy rewards.
                     </p>
                 </div>""")
@@ -772,11 +772,11 @@ def _build_gradio_demo():
                     with gr.Column():
                         tc = _artifact_path("training_curves.svg")
                         if tc: gr.Image(value=tc, type="filepath", label="Training Loss and Reward Curves", show_label=True)
-                        else: gr.HTML("<p style='color:#64748b; text-align:center;'>Run the Colab notebook to generate training curves.</p>")
+                        else: gr.HTML("<p style='color:var(--body-text-color-subdued); text-align:center;'>Run the Colab notebook to generate training curves.</p>")
                     with gr.Column():
                         ev = _artifact_path("eval_results.svg")
                         if ev: gr.Image(value=ev, type="filepath", label="Evaluation Results (12 Episodes)", show_label=True)
-                        else: gr.HTML("<p style='color:#64748b; text-align:center;'>Run the Colab notebook to generate evaluation results.</p>")
+                        else: gr.HTML("<p style='color:var(--body-text-color-subdued); text-align:center;'>Run the Colab notebook to generate evaluation results.</p>")
                 
                 with gr.Row():
                     with gr.Column():
@@ -788,46 +788,46 @@ def _build_gradio_demo():
 
             with gr.Tab("Methodology"):
                 gr.HTML("""<div style='max-width:800px; margin:0 auto; padding:20px;'>
-                    <h2 style='color:#f8fafc; margin-bottom:16px;'>Training Methodology</h2>
+                    <h2 style='color:var(--body-text-color); margin-bottom:16px;'>Training Methodology</h2>
                     
                     <div style='display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;'>
-                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #38bdf8;'>
-                            <h4 style='color:#38bdf8; margin:0 0 8px;'>Model</h4>
-                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>Qwen 2.5-1.5B-Instruct with LoRA (r=16) adapters on all attention and MLP projections. 4-bit NF4 quantization via bitsandbytes.</p>
+                        <div style='background:var(--background-fill-secondary); padding:16px; border-radius:10px; border-left:3px solid var(--color-accent);'>
+                            <h4 style='color:var(--color-accent); margin:0 0 8px;'>Model</h4>
+                            <p style='color:var(--body-text-color-subdued); margin:0; font-size:0.95em;'>Qwen 2.5-1.5B-Instruct with LoRA (r=16) adapters on all attention and MLP projections. 4-bit NF4 quantization via bitsandbytes.</p>
                         </div>
-                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #22c55e;'>
+                        <div style='background:var(--background-fill-secondary); padding:16px; border-radius:10px; border-left:3px solid #22c55e;'>
                             <h4 style='color:#22c55e; margin:0 0 8px;'>Training Algorithm</h4>
-                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>REINFORCE with running baseline. Loss = -(reward - baseline) * mean_log_prob. Gradient clipping at 1.0. AdamW with lr=2e-5.</p>
+                            <p style='color:var(--body-text-color-subdued); margin:0; font-size:0.95em;'>REINFORCE with running baseline. Loss = -(reward - baseline) * mean_log_prob. Gradient clipping at 1.0. AdamW with lr=2e-5.</p>
                         </div>
-                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #f59e0b;'>
+                        <div style='background:var(--background-fill-secondary); padding:16px; border-radius:10px; border-left:3px solid #f59e0b;'>
                             <h4 style='color:#f59e0b; margin:0 0 8px;'>Reward Function</h4>
-                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>Multi-level scoring: JSON format (-1.0 to -0.3), key completeness, fuzzy action_type matching (30+ synonyms mapped), env.step() execution reward + grader score.</p>
+                            <p style='color:var(--body-text-color-subdued); margin:0; font-size:0.95em;'>Multi-level scoring: JSON format (-1.0 to -0.3), key completeness, fuzzy action_type matching (30+ synonyms mapped), env.step() execution reward + grader score.</p>
                         </div>
-                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #a855f7;'>
+                        <div style='background:var(--background-fill-secondary); padding:16px; border-radius:10px; border-left:3px solid #a855f7;'>
                             <h4 style='color:#a855f7; margin:0 0 8px;'>Environment Dynamics</h4>
-                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>Schema drift (policy v1-v3), 5 actors with hidden trust scores, deceptive recommendations, cross-app data conflicts, action costs with budget limits.</p>
+                            <p style='color:var(--body-text-color-subdued); margin:0; font-size:0.95em;'>Schema drift (policy v1-v3), 5 actors with hidden trust scores, deceptive recommendations, cross-app data conflicts, action costs with budget limits.</p>
                         </div>
                     </div>
                     
-                    <h3 style='color:#f8fafc; margin-bottom:12px;'>Training Pipeline</h3>
-                    <div style='background:#0f172a; padding:16px; border-radius:10px; border:1px solid #334155;'>
-                        <p style='color:#cbd5e1; line-height:1.8; margin:0; font-family:monospace; font-size:0.9em;'>
-                            <span style='color:#38bdf8;'>1.</span> Sample environment state as prompt<br>
-                            <span style='color:#38bdf8;'>2.</span> Model generates JSON action (temp=1.0, top_p=0.95)<br>
-                            <span style='color:#38bdf8;'>3.</span> Parse JSON with fuzzy action_type matching<br>
-                            <span style='color:#38bdf8;'>4.</span> Execute action via env.step() for verifiable reward<br>
-                            <span style='color:#38bdf8;'>5.</span> Compute log-probs of generated tokens under current policy<br>
-                            <span style='color:#38bdf8;'>6.</span> REINFORCE update: loss = -(reward - baseline) * mean_log_prob<br>
-                            <span style='color:#38bdf8;'>7.</span> Clip gradients and update LoRA weights<br>
+                    <h3 style='color:var(--body-text-color); margin-bottom:12px;'>Training Pipeline</h3>
+                    <div style='background:var(--background-fill-secondary); padding:16px; border-radius:10px; border:1px solid var(--border-color-primary);'>
+                        <p style='color:var(--body-text-color-subdued); line-height:1.8; margin:0; font-family:monospace; font-size:0.9em;'>
+                            <span style='color:var(--color-accent);'>1.</span> Sample environment state as prompt<br>
+                            <span style='color:var(--color-accent);'>2.</span> Model generates JSON action (temp=1.0, top_p=0.95)<br>
+                            <span style='color:var(--color-accent);'>3.</span> Parse JSON with fuzzy action_type matching<br>
+                            <span style='color:var(--color-accent);'>4.</span> Execute action via env.step() for verifiable reward<br>
+                            <span style='color:var(--color-accent);'>5.</span> Compute log-probs of generated tokens under current policy<br>
+                            <span style='color:var(--color-accent);'>6.</span> REINFORCE update: loss = -(reward - baseline) * mean_log_prob<br>
+                            <span style='color:var(--color-accent);'>7.</span> Clip gradients and update LoRA weights<br>
                         </p>
                     </div>
                     
-                    <h3 style='color:#f8fafc; margin:16px 0 12px;'>World Modeling Capabilities Tested</h3>
-                    <table style='width:100%; border-collapse:collapse; color:#cbd5e1; font-size:0.9em;'>
-                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#38bdf8;'>Partial Observability</td><td style='padding:8px;'>Actor trust scores are hidden; agents must inspect before delegating</td></tr>
-                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#22c55e;'>Schema Drift</td><td style='padding:8px;'>Policy versions change compliance rules mid-episode</td></tr>
-                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#f59e0b;'>Deceptive Actors</td><td style='padding:8px;'>Analytics assistant may recommend compliance-violating shortcuts</td></tr>
-                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#a855f7;'>Multi-Stakeholder Conflict</td><td style='padding:8px;'>5 actors with conflicting objectives and stochastic responses</td></tr>
+                    <h3 style='color:var(--body-text-color); margin:16px 0 12px;'>World Modeling Capabilities Tested</h3>
+                    <table style='width:100%; border-collapse:collapse; color:var(--body-text-color-subdued); font-size:0.9em;'>
+                        <tr style='border-bottom:1px solid var(--border-color-primary);'><td style='padding:8px; color:var(--color-accent);'>Partial Observability</td><td style='padding:8px;'>Actor trust scores are hidden; agents must inspect before delegating</td></tr>
+                        <tr style='border-bottom:1px solid var(--border-color-primary);'><td style='padding:8px; color:#22c55e;'>Schema Drift</td><td style='padding:8px;'>Policy versions change compliance rules mid-episode</td></tr>
+                        <tr style='border-bottom:1px solid var(--border-color-primary);'><td style='padding:8px; color:#f59e0b;'>Deceptive Actors</td><td style='padding:8px;'>Analytics assistant may recommend compliance-violating shortcuts</td></tr>
+                        <tr style='border-bottom:1px solid var(--border-color-primary);'><td style='padding:8px; color:#a855f7;'>Multi-Stakeholder Conflict</td><td style='padding:8px;'>5 actors with conflicting objectives and stochastic responses</td></tr>
                         <tr><td style='padding:8px; color:#ef4444;'>Economic Constraints</td><td style='padding:8px;'>Action costs deducted from limited budget; overspending penalized</td></tr>
                     </table>
                 </div>""")
