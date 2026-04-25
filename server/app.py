@@ -442,7 +442,7 @@ def _build_gradio_demo():
         return None
 
     def _history_figure():
-        fig, ax = plt.subplots(figsize=(7.2, 2.8))
+        fig, ax = plt.subplots(figsize=(5, 1.8))
         fig.patch.set_facecolor("#1e293b")
         ax.set_facecolor("#0f172a")
         ax.grid(True, alpha=0.15, color="#94a3b8")
@@ -455,16 +455,16 @@ def _build_gradio_demo():
             ax.text(0.5, 0.5, "No steps executed yet", ha="center", va="center", transform=ax.transAxes, color="#cbd5e1")
             ax.set_xticks([])
             ax.set_yticks([])
-            ax.set_title("Step Reward Trend", fontsize=11, color="#f8fafc")
+            ax.set_title("Reward Trend", fontsize=10, color="#f8fafc")
             fig.tight_layout()
             return fig
 
         xs = list(range(1, len(demo_session["history"]) + 1))
         ys = [float(item["reward"]) for item in demo_session["history"]]
         ax.plot(xs, ys, marker="o", linewidth=2.0, color="#38bdf8")
-        ax.set_xlabel("Step", color="#cbd5e1")
-        ax.set_ylabel("Reward", color="#cbd5e1")
-        ax.set_title("Step Reward Trend", fontsize=11, color="#f8fafc")
+        ax.set_xlabel("Step", color="#cbd5e1", fontsize=9)
+        ax.set_ylabel("Reward", color="#cbd5e1", fontsize=9)
+        ax.set_title("Reward Trend", fontsize=10, color="#f8fafc")
         fig.tight_layout()
         return fig
 
@@ -709,7 +709,7 @@ def _build_gradio_demo():
                         )
                         cols_tb = gr.Textbox(label="Target Columns", placeholder="e.g. account_id, invoice_status",
                                             info="Comma-separated column names from the dataset")
-                        params_tb = gr.Code(label="Parameters (JSON)", value="{}", language="json", lines=3)
+                        params_tb = gr.Code(label="Parameters (JSON)", value="{}", language="json", lines=2)
                         reason_tb = gr.Textbox(label="Reasoning", placeholder="e.g. Analyze data quality before making changes",
                                              info="Explain your decision (15+ chars). Short reasoning is penalized.")
                         step_btn = gr.Button("Execute Step", variant="primary", size="lg")
@@ -725,21 +725,22 @@ def _build_gradio_demo():
                         error_md = gr.Markdown("")
                         
                         with gr.Row():
-                            with gr.Column():
+                            with gr.Column(scale=1, min_width=150):
                                 kpi_df = gr.Dataframe(
-                                    headers=["KPI Metric", "Value"],
+                                    headers=["KPI", "Value"],
                                     datatype=["str", "str"],
-                                    label="Live KPI Snapshot",
+                                    label="KPI Snapshot",
                                     interactive=False,
                                 )
-                            with gr.Column():
+                            with gr.Column(scale=1, min_width=150):
                                 reward_df = gr.Dataframe(
                                     headers=["Component", "Value"],
                                     datatype=["str", "str"],
-                                    label="Reward Breakdown",
+                                    label="Reward",
                                     interactive=False,
                                 )
-                        history_plot = gr.Plot(label="Step Reward Trend")
+                            with gr.Column(scale=2, min_width=250):
+                                history_plot = gr.Plot(label="Reward Trend")
 
                 reset_btn.click(
                     reset_env,
