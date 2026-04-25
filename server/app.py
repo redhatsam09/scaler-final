@@ -442,7 +442,7 @@ def _build_gradio_demo():
         return None
 
     def _history_figure():
-        fig, ax = plt.subplots(figsize=(5, 1.8))
+        fig, ax = plt.subplots(figsize=(6.5, 2.2))
         fig.patch.set_facecolor("#1e293b")
         ax.set_facecolor("#0f172a")
         ax.grid(True, alpha=0.15, color="#94a3b8")
@@ -725,22 +725,21 @@ def _build_gradio_demo():
                         error_md = gr.Markdown("")
                         
                         with gr.Row():
-                            with gr.Column(scale=1, min_width=150):
+                            with gr.Column(scale=1):
                                 kpi_df = gr.Dataframe(
-                                    headers=["KPI", "Value"],
+                                    headers=["KPI Metric", "Value"],
                                     datatype=["str", "str"],
-                                    label="KPI Snapshot",
+                                    label="Live KPI Snapshot",
                                     interactive=False,
                                 )
-                            with gr.Column(scale=1, min_width=150):
+                            with gr.Column(scale=1):
                                 reward_df = gr.Dataframe(
-                                    headers=["Component", "Value"],
+                                    headers=["Reward Component", "Value"],
                                     datatype=["str", "str"],
-                                    label="Reward",
+                                    label="Reward Breakdown",
                                     interactive=False,
                                 )
-                            with gr.Column(scale=2, min_width=250):
-                                history_plot = gr.Plot(label="Reward Trend")
+                        history_plot = gr.Plot(label="Step Reward Trend")
 
                 reset_btn.click(
                     reset_env,
