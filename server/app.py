@@ -536,46 +536,96 @@ def _build_gradio_demo():
         history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
 
         status_color = "#22c55e" if done else "#38bdf8"
-        status_text = "Episode Complete" if done else f"Step {obs.step_count}"
+        status_text = "✅ Episode Complete" if done else f"📍 Step {obs.step_count}"
+        step_num = len(demo_session["history"])
+        reward_color = "#22c55e" if reward.value > 0.05 else ("#ef4444" if reward.value < -0.01 else "#f59e0b")
 
-        output = f"""<div style='padding: 15px; border-radius: 8px; background: #1e293b; color: #f8fafc; border-left: 4px solid {status_color}'>
+        output = f"""<div style='padding: 18px; border-radius: 10px; background: #1e293b; color: #f8fafc; border-left: 5px solid {status_color}'>
 <h3 style='margin-top: 0; color: {status_color}'>{status_text}</h3>
-<p><b>Action Taken:</b> {action_type} | <b>Reward:</b> {reward.value:.4f} | <b>Grade:</b> {grade:.4f}</p>
+<div style='display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;'>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>🎯 <b>{action_type}</b></span>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em; color: {reward_color};'>💰 Reward: <b>{reward.value:.4f}</b></span>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>📊 Grade: <b>{grade:.4f}</b></span>
+  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>🔢 Step {step_num}</span>
+</div>
 <hr style='border-color: #334155'>
-<p><b>Observation:</b> {obs.natural_language_observation}</p>
-<p><b>Urgency:</b><ul>{urgency}</ul></p>
-<p><b>Actor Messages:</b><ul>{actors}</ul></p>
-<p><b>Recent History:</b> <span style='color: #94a3b8'>{history_text}</span></p>
+<p style='line-height: 1.6'><b>Observation:</b> {obs.natural_language_observation}</p>
+<p><b>⚠️ Urgency:</b><ul style='margin: 4px 0;'>{urgency}</ul></p>
+<p><b>💬 Actor Messages:</b><ul style='margin: 4px 0;'>{actors}</ul></p>
+<p style='margin-top: 10px; color: #94a3b8; font-size: 0.9em;'><b>History:</b> {history_text}</p>
 </div>"""
         return output, "", kpi_rows, reward_rows, _history_figure()
 
     def auto_play(task_id):
+        """Auto-play expert policy with narrated explanations and slow pacing."""
         out, err, kpi, rew, fig = reset_env(task_id, "medium", "42")
         yield out, err, kpi, rew, fig
         
+        # Each tuple: (action, cols, params, reasoning, narration_for_judge)
         sequences = {
             "task_enterprise_orchestration": [
-                ("analyze", "", "{}", "Initial analysis of dataset"),
-                ("inspect_actor", "account_id", '{"actor": "finance_bot"}', "Inspect finance bot objectives"),
-                ("delegate", "account_id", '{"actor": "finance_bot", "objective": "invoice cleanup"}', "Delegate work"),
-                ("oversight_review", "account_id", '{"actor": "analytics_assistant", "explain": true}', "Review suspicious advice"),
-                ("reconcile_apps", "account_id", '{"join_key": "account_id"}', "Reconcile across CRM and billing"),
-                ("validate", "compliance_tier", '{"compliance_tier_type": "categorical_nonempty"}', "Validate compliance rules"),
-                ("report_findings", "account_id", '{"include_summary": true, "include_quality_score": true}', "Final report")
+                ("analyze", "", "{}", "Profile data quality before any changes",
+                 "🔍 STEP 1: Always analyze first — the agent inspects data quality metrics to plan its strategy."),
+                ("inspect_actor", "account_id", '{"actor": "finance_bot"}', "Check finance bot trust before delegating",
+                 "👁️ STEP 2: Inspect actor trust — the agent checks if finance_bot is trustworthy BEFORE delegating work. This is the 'world model' — reasoning about hidden state."),
+                ("delegate", "account_id", '{"actor": "finance_bot", "objective": "invoice cleanup"}', "Delegate invoice work after confirming trust",
+                 "🤝 STEP 3: Delegate to trusted actor — now that trust is confirmed, the agent safely assigns invoice cleanup. Stochastic: the actor might push back!"),
+                ("oversight_review", "account_id", '{"actor": "analytics_assistant", "explain": true}', "Detect deceptive recommendations from analytics assistant",
+                 "🕵️ STEP 4: Oversight review — the analytics_assistant may have suggested a shortcut that violates compliance. The agent detects deception here."),
+                ("reconcile_apps", "account_id", '{"join_key": "account_id"}', "Fix cross-app data conflicts between CRM and Billing",
+                 "🔄 STEP 5: Reconcile apps — CRM, Billing, and Support data can disagree on the same account. The agent patches cross-system conflicts."),
+                ("validate", "compliance_tier", '{"compliance_tier_type": "categorical_nonempty"}', "Validate after schema drift changed compliance rules",
+                 "✅ STEP 6: Validate after drift — schema drift may have added new compliance rules. The agent validates against the LATEST policy version."),
+                ("report_findings", "account_id", '{"include_summary": true, "include_quality_score": true, "include_recommendations": true}', "Final quality report with all improvements",
+                 "📋 STEP 7: Final report — the agent summarizes improvements. Report reward only fires if actual data quality improved (anti-gaming).")
             ],
             "task_missing_values": [
-                ("analyze", "", "{}", "Analyze dataset for missing values"),
-                ("impute", "email,phone", '{"method": "forward_fill"}', "Impute simple gaps"),
-                ("impute", "lead_score", '{"method": "mean"}', "Impute numeric gaps"),
-                ("validate", "email", "{}", "Validate imputation results"),
-                ("report_findings", "email", '{"include_summary": true}', "Report findings")
+                ("analyze", "", "{}", "Analyze dataset for missing values",
+                 "🔍 STEP 1: Analyze — profile which columns have missing values and how severe."),
+                ("impute", "email,phone", '{"method": "forward_fill"}', "Fill gaps in text columns using forward fill",
+                 "🔧 STEP 2: Impute text columns — forward_fill propagates last known value. The reward tracks missing value reduction."),
+                ("impute", "lead_score", '{"method": "mean"}', "Fill numeric gaps using column mean",
+                 "🔧 STEP 3: Impute numeric columns — mean imputation for numeric fields preserves distribution."),
+                ("validate", "email", "{}", "Validate cleaned data",
+                 "✅ STEP 4: Validate — check data types and constraints after imputation."),
+                ("report_findings", "email", '{"include_summary": true, "include_quality_score": true}', "Report findings",
+                 "📋 STEP 5: Report — final summary. Quality score must exceed baseline or report earns reduced reward.")
+            ],
+            "task_duplicate_handling": [
+                ("analyze", "", "{}", "Profile duplicates in dataset",
+                 "🔍 STEP 1: Analyze — scan for duplicate records in the invoice dataset."),
+                ("deduplicate", "invoice_id", '{"subset": ["invoice_id"], "keep": "first"}', "Remove duplicates by invoice_id",
+                 "🗑️ STEP 2: Deduplicate — remove duplicate invoice records. Over-deletion is penalized!"),
+                ("validate", "invoice_id,amount", "{}", "Validate deduplication results",
+                 "✅ STEP 3: Validate — confirm no data corruption after deduplication."),
+                ("report_findings", "invoice_id", '{"include_summary": true, "include_quality_score": true}', "Report deduplication results",
+                 "📋 STEP 4: Report — document the deduplication outcome with quality metrics.")
+            ],
+            "task_complex_validation": [
+                ("analyze", "", "{}", "Analyze complex validation requirements",
+                 "🔍 STEP 1: Analyze — understand the multi-constraint validation landscape."),
+                ("impute", "email,phone", '{"method": "forward_fill"}', "Fix missing values before validation",
+                 "🔧 STEP 2: Impute — fill gaps so validation rules can be properly checked."),
+                ("deduplicate", "account_id", '{"keep": "first"}', "Remove duplicate accounts",
+                 "🗑️ STEP 3: Deduplicate — clean duplicates before cross-app reconciliation."),
+                ("reconcile_apps", "account_id", '{"join_key": "account_id"}', "Reconcile cross-app data",
+                 "🔄 STEP 4: Reconcile — align CRM, Billing, Support data for this account."),
+                ("validate", "csat_score", '{"csat_score_type": "numeric", "csat_score_min": 1, "csat_score_max": 5}', "Validate with constraints",
+                 "✅ STEP 5: Validate — check numeric ranges, categorical constraints, and cross-field rules."),
+                ("report_findings", "account_id", '{"include_summary": true, "include_quality_score": true}', "Report validation results",
+                 "📋 STEP 6: Report — summarize all validation findings and quality improvement.")
             ]
         }
         
         seq = sequences.get(task_id, sequences["task_missing_values"])
-        for action, cols, params, reasoning in seq:
-            time.sleep(1.2)
+        for action, cols, params, reasoning, narration in seq:
+            time.sleep(3.0)  # Slow pace so judges can read each step
             out, err, kpi, rew, fig = step_env(action, cols, params, reasoning)
+            # Prepend narration banner to the output
+            narration_html = f"""<div style='padding: 10px 14px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(135deg, #1e3a5f, #1e293b); border: 1px solid #38bdf8; color: #93c5fd; font-size: 0.95em;'>
+<b>🤖 Expert Agent Reasoning:</b> {narration}
+</div>"""
+            out = narration_html + out
             yield out, err, kpi, rew, fig
 
     def preset_action(action_type):
