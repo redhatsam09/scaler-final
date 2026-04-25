@@ -19,7 +19,6 @@ Enterprise workflows are messy. A real enterprise operations agent must:
 - **Navigate conflicting stakeholder incentives** — finance wants to cut costs, support wants SLA protection, sales wants conversion
 - **Detect deceptive recommendations** — an analytics bot might suggest shortcuts that destroy compliance
 - **Adapt to mid-episode policy changes** — contracts rename fields, new compliance tiers appear, rules shift
-- **Manage budgets** — every action has a cost, and budget overflow is penalized
 - **Gather information before acting** — blindly delegating to an untrustworthy actor wastes resources
 
 Most RL environments treat enterprise tasks as simple tool-calling. **This environment captures the nuances** — partial observability, stochastic actor responses, cascading drift, and multi-stakeholder negotiation.
@@ -33,7 +32,6 @@ Most RL environments treat enterprise tasks as simple tool-calling. **This envir
 | **Schema Drift** | Mid-episode field additions, status renames, new validation rules |
 | **Dynamic T&C Updates** | Policy v1→v2→v3 with escalating compliance requirements |
 | **Deceptive Actors** | Analytics assistant may recommend KPI shortcuts (detectable via oversight) |
-| **Economic Constraints** | Action costs with budget limits; cost noise increases with difficulty |
 | **Process Rewards** | Bonus for analyze-first, inspect-before-delegate, validate-after-drift |
 | **Natural Language Observations** | LLM must parse unstructured text, not just read structured fields |
 
@@ -46,20 +44,20 @@ Most RL environments treat enterprise tasks as simple tool-calling. **This envir
 - `task_enterprise_orchestration` — Full multi-app orchestration with all dynamics (hard)
 
 ### Agent Actions (12)
-| Action | Purpose | Cost |
-|--------|---------|------|
-| `analyze` | Profile data quality | $2 |
-| `impute` | Fill missing values | $9 |
-| `deduplicate` | Remove duplicates | $7 |
-| `validate` | Check rules & compliance | $5 |
-| `report_findings` | Generate quality report | $3 |
-| `delegate` | Assign work to actor (stochastic!) | $4 |
-| `resolve_alert` | Handle actor escalation | $6 |
-| `reconcile_apps` | Fix cross-app conflicts | $8 |
-| `oversight_review` | Detect deceptive recommendations | $6 |
-| `inspect_actor` | Reveal actor trust & objectives | $1.5 |
-| `audit_records` | Check specific account for issues | $3 |
-| `request_policy_clarification` | Get current T&C details | $1 |
+| Action | Purpose |
+|--------|---------|
+| `analyze` | Profile data quality |
+| `impute` | Fill missing values |
+| `deduplicate` | Remove duplicates |
+| `validate` | Check rules & compliance |
+| `report_findings` | Generate quality report |
+| `delegate` | Assign work to actor (stochastic!) |
+| `resolve_alert` | Handle actor escalation |
+| `reconcile_apps` | Fix cross-app conflicts |
+| `oversight_review` | Detect deceptive recommendations |
+| `inspect_actor` | Reveal actor trust & objectives |
+| `audit_records` | Check specific account for issues |
+| `request_policy_clarification` | Get current T&C details |
 
 ### The Optimal Policy
 To succeed in the flagship orchestration task, an agent must discover this sequence:
@@ -77,7 +75,7 @@ To succeed in the flagship orchestration task, an agent must discover this seque
 
 ### Anti-Gaming Reward Design
 - Per-step shaped progress signal + rubric-style graders
-- Loop penalties, over-deletion penalties, budget overflow penalties
+- Loop penalties and over-deletion penalties
 - Adaptive stale-strategy penalties after policy drift until drift-aware actions are executed
 - Reasoning quality checks in both runtime rewards and graders (shared threshold)
 - Process bonuses (analyze-first, inspect-before-delegate, validate-after-drift)
