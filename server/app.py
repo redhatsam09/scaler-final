@@ -658,15 +658,23 @@ def _build_gradio_demo():
 
     with gr.Blocks(title="Enterprise Orchestration Lab", theme=premium_theme) as demo:
         gr.HTML("""
-        <div style="text-align: center; max-width: 800px; margin: 0 auto; padding: 20px 0;">
-            <h1 style="color: #38bdf8; font-size: 2.4em; margin-bottom: 10px; font-weight: 600; letter-spacing: -0.5px;">
-                <span style="display: inline-block; width: 36px; height: 36px; background: #2563eb; border-radius: 8px; text-align: center; line-height: 36px; font-size: 0.7em; color: #fff; vertical-align: middle; margin-right: 10px;">EO</span>
-                Enterprise Orchestration Lab
-            </h1>
-            <p style="color: #94a3b8; font-size: 1.05em; line-height: 1.6;">
-                A multi-app reinforcement learning environment for <strong style="color:#f8fafc">World Modeling</strong> (Theme 3.1).<br>
-                Agents navigate schema drift, actor conflicts, deceptive oversight, and economic budgets.
+        <div style="text-align: center; max-width: 860px; margin: 0 auto; padding: 28px 0 16px;">
+            <div style="display: inline-flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'><path d='M12 2L2 7l10 5 10-5-10-5z'/><path d='M2 17l10 5 10-5'/><path d='M2 12l10 5 10-5'/></svg>
+                </div>
+                <h1 style="color: #f8fafc; font-size: 2.2em; margin: 0; font-weight: 700; letter-spacing: -0.5px;">Enterprise Orchestration Lab</h1>
+            </div>
+            <p style="color: #94a3b8; font-size: 1.0em; line-height: 1.7; max-width: 700px; margin: 0 auto;">
+                A multi-system RL environment for <strong style="color:#38bdf8">World Modeling</strong> (Theme 3.1).
+                Agents manage CRM, Billing, and Support while navigating schema drift, actor conflicts, deceptive oversight, and economic budgets.
             </p>
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">REINFORCE Policy Gradient</span>
+                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">Qwen 2.5-1.5B + LoRA</span>
+                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">4-bit NF4 Quantization</span>
+                <span style="background: #1e3a5f; color: #7dd3fc; padding: 4px 12px; border-radius: 20px; font-size: 0.8em;">Environment-Grounded Rewards</span>
+            </div>
         </div>
         """)
 
@@ -674,42 +682,46 @@ def _build_gradio_demo():
             with gr.Tab("Simulation Console"):
                 with gr.Row():
                     with gr.Column(scale=1, variant="panel"):
-                        gr.Markdown("### Configure Session")
+                        gr.HTML("<h3 style='color:#f8fafc; margin:0 0 8px;'>Session Configuration</h3>")
                         task_dd = gr.Dropdown(
                             choices=["task_enterprise_orchestration", "task_missing_values",
                                      "task_duplicate_handling", "task_complex_validation"],
                             value="task_enterprise_orchestration", label="Task Scenario",
-                            info="Enterprise Orchestration is the flagship task with all dynamics"
+                            info="Enterprise Orchestration is the flagship task with schema drift, actor conflicts, and deceptive oversight"
                         )
                         with gr.Row():
                             diff_dd = gr.Dropdown(choices=["easy", "medium", "hard"], value="hard", label="Difficulty")
                             seed_tb = gr.Textbox(value="42", label="Random Seed")
                         
                         with gr.Row():
-                            reset_btn = gr.Button("Reset Environment", variant="primary")
-                            autoplay_btn = gr.Button("Auto-Play Expert Policy", variant="secondary")
+                            reset_btn = gr.Button("Reset Environment", variant="primary", size="lg")
+                            autoplay_btn = gr.Button("Watch Expert Policy", variant="secondary", size="lg")
+                        gr.HTML("<p style='color:#64748b; font-size:0.82em; margin:4px 0 0;'>Expert Policy runs a 7-step narrated demo showing optimal agent reasoning.</p>")
 
-                        gr.Markdown("---")
-                        gr.Markdown("### Execute Actions")
+                        gr.HTML("<hr style='border-color:#334155; margin:14px 0;'>")
+                        gr.HTML("<h3 style='color:#f8fafc; margin:0 0 8px;'>Manual Action Execution</h3>")
                         action_dd = gr.Dropdown(
                             choices=["analyze", "impute", "deduplicate", "validate", "report_findings",
                                      "delegate", "resolve_alert", "reconcile_apps", "oversight_review",
                                      "inspect_actor", "audit_records", "request_policy_clarification"],
                             value="analyze", label="Action Type", 
-                            info="Selecting an action auto-fills recommended parameters below"
+                            info="Select an action and parameters auto-fill with recommended defaults"
                         )
-                        cols_tb = gr.Textbox(label="Target Columns (comma-separated)", placeholder="account_id, invoice_status, compliance_tier",
-                                            info="Column names from the dataset to apply this action to")
+                        cols_tb = gr.Textbox(label="Target Columns", placeholder="e.g. account_id, invoice_status",
+                                            info="Comma-separated column names from the dataset")
                         params_tb = gr.Code(label="Parameters (JSON)", value="{}", language="json", lines=3)
-                        reason_tb = gr.Textbox(label="Reasoning", placeholder="Explain why this action is appropriate given the current state",
-                                             info="Minimum 15 characters. Weak reasoning incurs a penalty.")
-                        step_btn = gr.Button("Execute Step", variant="primary")
+                        reason_tb = gr.Textbox(label="Reasoning", placeholder="e.g. Analyze data quality before making changes",
+                                             info="Explain your decision (15+ chars). Short reasoning is penalized.")
+                        step_btn = gr.Button("Execute Step", variant="primary", size="lg")
                         
                         action_dd.change(preset_action, inputs=[action_dd], outputs=[cols_tb, params_tb, reason_tb])
 
                     with gr.Column(scale=2):
-                        gr.Markdown("### Environment Output")
-                        output_html = gr.HTML("<div style='padding: 20px; text-align: center; color: #64748b; border: 1px dashed #334155; border-radius: 8px;'>Click 'Reset Environment' or 'Auto-Play Expert Policy' to begin.</div>")
+                        gr.HTML("<h3 style='color:#f8fafc; margin:0 0 8px;'>Environment Output</h3>")
+                        output_html = gr.HTML("""<div style='padding: 30px; text-align: center; color: #64748b; border: 1px dashed #334155; border-radius: 10px; background: #0f172a;'>
+                            <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='#475569' stroke-width='1.5' style='margin-bottom:10px'><circle cx='12' cy='12' r='10'/><path d='M12 8v4l3 3'/></svg>
+                            <p style='margin:0; font-size:1.05em;'>Click <b style='color:#38bdf8'>Reset Environment</b> to start a session or <b style='color:#94a3b8'>Watch Expert Policy</b> for a narrated demo.</p>
+                        </div>""")
                         error_md = gr.Markdown("")
                         
                         with gr.Row():
@@ -746,23 +758,78 @@ def _build_gradio_demo():
                 )
 
             with gr.Tab("Training Evidence"):
-                gr.Markdown("### Observable Evidence of Training Progress\nThese artifacts were generated during GRPO + TRL training against the environment.")
+                gr.HTML("""<div style='padding:16px; background:#0f172a; border-radius:10px; margin-bottom:12px;'>
+                    <h3 style='color:#f8fafc; margin:0 0 8px;'>Training Pipeline Evidence</h3>
+                    <p style='color:#94a3b8; margin:0; line-height:1.6;'>
+                        Model trained with <b style='color:#38bdf8'>REINFORCE policy gradient</b> on Qwen 2.5-1.5B-Instruct (4-bit NF4 + LoRA).
+                        Each step generates a JSON action, runs it through <code style='background:#1e293b; padding:2px 6px; border-radius:4px;'>env.step()</code>,
+                        and uses the environment reward as the training signal. No proxy rewards.
+                    </p>
+                </div>""")
+                
+                with gr.Row():
+                    with gr.Column():
+                        tc = _artifact_path("training_curves.svg")
+                        if tc: gr.Image(value=tc, type="filepath", label="Training Loss and Reward Curves", show_label=True)
+                        else: gr.HTML("<p style='color:#64748b; text-align:center;'>Run the Colab notebook to generate training curves.</p>")
+                    with gr.Column():
+                        ev = _artifact_path("eval_results.svg")
+                        if ev: gr.Image(value=ev, type="filepath", label="Evaluation Results (12 Episodes)", show_label=True)
+                        else: gr.HTML("<p style='color:#64748b; text-align:center;'>Run the Colab notebook to generate evaluation results.</p>")
                 
                 with gr.Row():
                     with gr.Column():
                         rp = _artifact_path("reward_progression.svg")
-                        if rp: gr.Image(value=rp, type="filepath", label="Reward Improvement (Baseline -> Trained)", show_label=True)
-                    with gr.Column():
-                        traj = _artifact_path("failure_success_trajectory.svg")
-                        if traj: gr.Image(value=traj, type="filepath", label="Failure vs Success Trajectory", show_label=True)
-                
-                with gr.Row():
+                        if rp: gr.Image(value=rp, type="filepath", label="Reward Progression (Baseline vs Trained)", show_label=True)
                     with gr.Column():
                         flow = _artifact_path("world_model_flow.svg")
-                        if flow: gr.Image(value=flow, type="filepath", label="World Model Flow", show_label=True)
-                    with gr.Column():
-                        tc = _artifact_path("training_curve.svg")
-                        if tc: gr.Image(value=tc, type="filepath", label="Loss Curve (if available)", show_label=True)
+                        if flow: gr.Image(value=flow, type="filepath", label="World Model Architecture Flow", show_label=True)
+
+            with gr.Tab("Methodology"):
+                gr.HTML("""<div style='max-width:800px; margin:0 auto; padding:20px;'>
+                    <h2 style='color:#f8fafc; margin-bottom:16px;'>Training Methodology</h2>
+                    
+                    <div style='display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;'>
+                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #38bdf8;'>
+                            <h4 style='color:#38bdf8; margin:0 0 8px;'>Model</h4>
+                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>Qwen 2.5-1.5B-Instruct with LoRA (r=16) adapters on all attention and MLP projections. 4-bit NF4 quantization via bitsandbytes.</p>
+                        </div>
+                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #22c55e;'>
+                            <h4 style='color:#22c55e; margin:0 0 8px;'>Training Algorithm</h4>
+                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>REINFORCE with running baseline. Loss = -(reward - baseline) * mean_log_prob. Gradient clipping at 1.0. AdamW with lr=2e-5.</p>
+                        </div>
+                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #f59e0b;'>
+                            <h4 style='color:#f59e0b; margin:0 0 8px;'>Reward Function</h4>
+                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>Multi-level scoring: JSON format (-1.0 to -0.3), key completeness, fuzzy action_type matching (30+ synonyms mapped), env.step() execution reward + grader score.</p>
+                        </div>
+                        <div style='background:#1e293b; padding:16px; border-radius:10px; border-left:3px solid #a855f7;'>
+                            <h4 style='color:#a855f7; margin:0 0 8px;'>Environment Dynamics</h4>
+                            <p style='color:#cbd5e1; margin:0; font-size:0.95em;'>Schema drift (policy v1-v3), 5 actors with hidden trust scores, deceptive recommendations, cross-app data conflicts, action costs with budget limits.</p>
+                        </div>
+                    </div>
+                    
+                    <h3 style='color:#f8fafc; margin-bottom:12px;'>Training Pipeline</h3>
+                    <div style='background:#0f172a; padding:16px; border-radius:10px; border:1px solid #334155;'>
+                        <p style='color:#cbd5e1; line-height:1.8; margin:0; font-family:monospace; font-size:0.9em;'>
+                            <span style='color:#38bdf8;'>1.</span> Sample environment state as prompt<br>
+                            <span style='color:#38bdf8;'>2.</span> Model generates JSON action (temp=1.0, top_p=0.95)<br>
+                            <span style='color:#38bdf8;'>3.</span> Parse JSON with fuzzy action_type matching<br>
+                            <span style='color:#38bdf8;'>4.</span> Execute action via env.step() for verifiable reward<br>
+                            <span style='color:#38bdf8;'>5.</span> Compute log-probs of generated tokens under current policy<br>
+                            <span style='color:#38bdf8;'>6.</span> REINFORCE update: loss = -(reward - baseline) * mean_log_prob<br>
+                            <span style='color:#38bdf8;'>7.</span> Clip gradients and update LoRA weights<br>
+                        </p>
+                    </div>
+                    
+                    <h3 style='color:#f8fafc; margin:16px 0 12px;'>World Modeling Capabilities Tested</h3>
+                    <table style='width:100%; border-collapse:collapse; color:#cbd5e1; font-size:0.9em;'>
+                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#38bdf8;'>Partial Observability</td><td style='padding:8px;'>Actor trust scores are hidden; agents must inspect before delegating</td></tr>
+                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#22c55e;'>Schema Drift</td><td style='padding:8px;'>Policy versions change compliance rules mid-episode</td></tr>
+                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#f59e0b;'>Deceptive Actors</td><td style='padding:8px;'>Analytics assistant may recommend compliance-violating shortcuts</td></tr>
+                        <tr style='border-bottom:1px solid #334155;'><td style='padding:8px; color:#a855f7;'>Multi-Stakeholder Conflict</td><td style='padding:8px;'>5 actors with conflicting objectives and stochastic responses</td></tr>
+                        <tr><td style='padding:8px; color:#ef4444;'>Economic Constraints</td><td style='padding:8px;'>Action costs deducted from limited budget; overspending penalized</td></tr>
+                    </table>
+                </div>""")
 
     return demo
 
