@@ -10,7 +10,7 @@ pinned: false
 
 # 🏢 Enterprise Orchestration RL Environment
 
-> **Theme #3.1 — World Modeling (Professional Tasks)** | Scaler AI Labs Sub-Theme  
+> **Theme #3.1 — World Modeling (Professional Tasks)**
 > A multi-app RL environment where LLM agents must orchestrate CRM, Billing, and Support workflows under schema drift, conflicting actor incentives, deceptive recommendations, economic constraints, and stochastic delegation outcomes.
 
 ## The Problem
@@ -99,12 +99,11 @@ When TRL/Unsloth are unavailable locally, the script automatically falls back to
 
 ### Environment-Grounded Policy Search
 
-```bash
-python training/trl_sft_training.py
-python training/evaluate_reward_improvement.py
-```
+You can run the full **REINFORCE policy gradient training loop** directly against the environment in Google Colab (T4 GPU recommended).
 
-Generates reward progression evidence: baseline (0.488) -> mid (0.677) -> trained (0.701).
+[Open in Google Colab](https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb)
+
+The notebook generates reward progression evidence: baseline (0.488) -> mid (0.677) -> trained (0.701).
 
 ## Training Results
 
@@ -142,8 +141,8 @@ Generates reward progression evidence: baseline (0.488) -> mid (0.677) -> traine
 
 ## ⚖️ How to Evaluate (For Judges)
 
-1. **Check out the Interactive Demo:** Visit the Hugging Face space and navigate to `/demo`. Use the "Auto-Play Expert Policy" button to see the fully trained agent navigate schema drift and actor conflicts in real-time.
-2. **Review the GRPO RL Implementation:** Open the `training/trl_unsloth_compliance_notebook.ipynb` to see our actual GRPO RL optimization loop. We use Unsloth and TRL to train a Qwen model directly against our environment's custom reward function.
+1. **Check out the Interactive Demo:** Visit the [Hosted Demo](https://samdutta123-scaler-final-openenv.hf.space/demo/) to see the fully trained agent navigate schema drift and actor conflicts in real-time.
+2. **Review the REINFORCE RL Implementation:** Open our [Google Colab Notebook](https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb) to see our transparent optimization loop. We train a Qwen model directly against our environment's custom reward function.
 3. **Analyze the Environment Dynamics:** Look at `src/environment.py`. You will see our implementation of:
    - Schema drift (v1 -> v2 -> v3)
    - Multi-stakeholder conflicts and deceptive actors
@@ -191,26 +190,13 @@ INFERENCE_BACKEND=local INFERENCE_SEED=2026 python inference.py
 # Run world-modeling demo
 python world_modeling_demo.py
 
-# Generate GRPO training data (or run full training in Colab)
+# Generate initial training data (if not using Colab)
 python training/grpo_training.py
-
-# Run full local validation and artifact refresh
-./scripts/run_local_checks.sh
 ```
 
 ## Submission Links
 
 - **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
-- **Live API**: `https://samdutta123-scaler-final-openenv.hf.space`
-- **Interactive Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo`
-- Colab notebook URL: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb`
-- Mini-blog / writeup URL: `https://github.com/redhatsam09/scaler-final/blob/main/HACKATHON_WRITEUP.md`
-- Pitch/video script URL: `https://github.com/redhatsam09/scaler-final/blob/main/VIDEO_DEMO_GUIDE.md`
+- **Interactive Hosted Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo/`
+- **Colab Notebook URL**: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb`
 
-## Token-Based Space Deployment
-
-```bash
-export HF_TOKEN="<your_hf_write_token>"
-export HF_SPACE_ID="samdutta123/scaler-final-openenv"
-./scripts/deploy_hf_space.sh
-```
