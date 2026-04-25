@@ -493,15 +493,15 @@ def _build_gradio_demo():
         urgency = "".join(f"<li style='color: #ef4444'>{s}</li>" for s in obs.urgency_signals) if obs.urgency_signals else "<li>None</li>"
         actors = "".join(f"<li>{m}</li>" for m in obs.actor_messages) if obs.actor_messages else "<li>None</li>"
 
-        output = f"""<div style='padding: 15px; border-radius: 8px; background: #1e293b; color: #f8fafc;'>
-<h3 style='margin-top: 0; color: #38bdf8'>Environment Reset Successfully</h3>
-<p><b>Task:</b> {task_id} | <b>Difficulty:</b> {difficulty} | <b>Seed:</b> {seed_val}</p>
-<p><b>Dataset:</b> {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols</p>
-<hr style='border-color: #334155'>
-<p><b>Observation:</b> {state_text}</p>
-<p><b>Urgency Signals:</b><ul>{urgency}</ul></p>
-<p><b>Actor Messages:</b><ul>{actors}</ul></p>
-<p><b>Available Actions:</b> {', '.join(obs.available_actions)}</p>
+        output = f"""<div style='padding: 16px; border-radius: 10px; background: var(--background-fill-secondary); color: var(--body-text-color); border: 1px solid var(--border-color-primary); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+<h3 style='margin-top: 0; color: var(--color-accent); font-weight: 600;'>Environment Reset Successfully</h3>
+<p style='margin-bottom: 8px;'><b>Task:</b> {task_id} &nbsp;|&nbsp; <b>Difficulty:</b> {difficulty} &nbsp;|&nbsp; <b>Seed:</b> {seed_val}</p>
+<p style='margin-bottom: 12px;'><b>Dataset:</b> {obs.dataset_shape[0]} rows × {obs.dataset_shape[1]} cols</p>
+<hr style='border-color: var(--border-color-primary); margin: 12px 0;'>
+<p style='line-height: 1.6;'><b>Observation:</b> {state_text}</p>
+<p style='margin-top: 12px;'><b>Urgency Signals:</b><ul style='margin-top: 4px;'>{urgency}</ul></p>
+<p><b>Actor Messages:</b><ul style='margin-top: 4px;'>{actors}</ul></p>
+<p style='margin-top: 12px; font-size: 0.9em; color: var(--body-text-color-subdued);'><b>Available Actions:</b> {', '.join(obs.available_actions)}</p>
 </div>"""
         return output, "", kpi_rows, reward_rows, _history_figure()
 
@@ -535,24 +535,24 @@ def _build_gradio_demo():
 
         history_text = " → ".join(f"{h['action']}({h['reward']:.2f})" for h in demo_session["history"][-6:])
 
-        status_color = "#22c55e" if done else "#38bdf8"
+        status_color = "#22c55e" if done else "var(--color-accent)"
         status_text = "EPISODE COMPLETE" if done else f"STEP {obs.step_count}"
         step_num = len(demo_session["history"])
         reward_color = "#22c55e" if reward.value > 0.05 else ("#ef4444" if reward.value < -0.01 else "#f59e0b")
 
-        output = f"""<div style='padding: 18px; border-radius: 10px; background: #1e293b; color: #f8fafc; border-left: 5px solid {status_color}'>
-<h3 style='margin-top: 0; color: {status_color}; letter-spacing: 1px; font-size: 1.1em;'>{status_text}</h3>
-<div style='display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;'>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>ACTION: <b>{action_type}</b></span>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em; color: {reward_color};'>REWARD: <b>{reward.value:.4f}</b></span>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>GRADE: <b>{grade:.4f}</b></span>
-  <span style='background: #334155; padding: 4px 10px; border-radius: 6px; font-size: 0.9em;'>STEP {step_num}</span>
+        output = f"""<div style='padding: 18px; border-radius: 10px; background: var(--background-fill-secondary); color: var(--body-text-color); border: 1px solid var(--border-color-primary); border-left: 5px solid {status_color}; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+<h3 style='margin-top: 0; color: {status_color}; letter-spacing: 1px; font-size: 1.1em; font-weight: 700;'>{status_text}</h3>
+<div style='display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;'>
+  <span style='background: var(--background-fill-primary); padding: 4px 10px; border-radius: 6px; font-size: 0.9em; border: 1px solid var(--border-color-primary);'>ACTION: <b>{action_type}</b></span>
+  <span style='background: var(--background-fill-primary); padding: 4px 10px; border-radius: 6px; font-size: 0.9em; color: {reward_color}; border: 1px solid var(--border-color-primary);'>REWARD: <b>{reward.value:.4f}</b></span>
+  <span style='background: var(--background-fill-primary); padding: 4px 10px; border-radius: 6px; font-size: 0.9em; border: 1px solid var(--border-color-primary);'>GRADE: <b>{grade:.4f}</b></span>
+  <span style='background: var(--background-fill-primary); padding: 4px 10px; border-radius: 6px; font-size: 0.9em; color: var(--body-text-color-subdued); border: 1px solid var(--border-color-primary);'>STEP {step_num}</span>
 </div>
-<hr style='border-color: #334155'>
-<p style='line-height: 1.6'><b>Observation:</b> {obs.natural_language_observation}</p>
-<p><b>Urgency Signals:</b><ul style='margin: 4px 0;'>{urgency}</ul></p>
+<hr style='border-color: var(--border-color-primary); margin: 12px 0;'>
+<p style='line-height: 1.6;'><b>Observation:</b> {obs.natural_language_observation}</p>
+<p style='margin-top: 12px;'><b>Urgency Signals:</b><ul style='margin: 4px 0;'>{urgency}</ul></p>
 <p><b>Actor Messages:</b><ul style='margin: 4px 0;'>{actors}</ul></p>
-<p style='margin-top: 10px; color: #94a3b8; font-size: 0.9em;'><b>Action History:</b> {history_text}</p>
+<p style='margin-top: 14px; color: var(--body-text-color-subdued); font-size: 0.9em;'><b>Action History:</b> {history_text}</p>
 </div>"""
         return output, "", kpi_rows, reward_rows, _history_figure()
 
@@ -621,8 +621,9 @@ def _build_gradio_demo():
         for action, cols, params, reasoning, narration in seq:
             time.sleep(3.0)
             out, err, kpi, rew, fig = step_env(action, cols, params, reasoning)
-            narration_html = f"""<div style='padding: 10px 14px; margin-bottom: 8px; border-radius: 8px; background: linear-gradient(135deg, #1e3a5f, #1e293b); border: 1px solid #38bdf8; color: #93c5fd; font-size: 0.95em;'>
-<b>AGENT REASONING:</b> {narration}
+            narration_html = f"""<div style='padding: 12px 16px; margin-bottom: 12px; border-radius: 8px; background: var(--background-fill-secondary); border: 2px solid var(--color-accent); color: var(--body-text-color); font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.1);'>
+<strong style='color: var(--color-accent); display: flex; align-items: center; gap: 8px;'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='10'/><path d='M12 16v-4'/><path d='M12 8h.01'/></svg> AGENT REASONING:</strong> 
+<span style='display: inline-block; margin-top: 6px;'>{narration}</span>
 </div>"""
             out = narration_html + out
             yield out, err, kpi, rew, fig
