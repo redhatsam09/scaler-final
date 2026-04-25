@@ -134,8 +134,12 @@ The notebook generates reward progression evidence: baseline (0.488) -> mid (0.6
 | Held-out hard drift | **0.831** |
 
 ### Training Progression
-![Reward Progression](artifacts/reward_progression.svg)
-![Failure vs Success Trajectory](artifacts/failure_success_trajectory.svg)
+
+![Reward Progression](artifacts/reward_progression.png)
+*Figure 1: This plot demonstrates the steady increase in environment reward over 30 training steps, showing the Qwen agent learning to successfully navigate the task.*
+
+![Failure vs Success Trajectory](artifacts/failure_success_trajectory.png)
+*Figure 2: This plot compares the negative cumulative reward of the untrained baseline vs. the positive scaling reward of our fully trained policy.*
 
 ## ⚖️ How to Evaluate (For Judges)
 
