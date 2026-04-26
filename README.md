@@ -8,7 +8,7 @@ app_port: 7860
 pinned: false
 ---
 
-# 🏢 Enterprise Orchestration RL Environment
+# Enterprise Orchestration RL Environment
 
 > **Theme #3.1 — World Modeling (Professional Tasks)**
 > A multi-app RL environment where LLM agents must orchestrate CRM, Billing, and Support workflows under schema drift, conflicting actor incentives, deceptive recommendations, economic constraints, and stochastic delegation outcomes.
@@ -134,14 +134,10 @@ The notebook generates reward progression evidence: baseline (0.488) -> mid (0.6
 | Held-out hard drift | **0.831** |
 
 ### Training Progression
+![Reward Progression](artifacts/reward_progression.svg)
+![Failure vs Success Trajectory](artifacts/failure_success_trajectory.svg)
 
-![Reward Progression](artifacts/reward_progression.png)
-*Figure 1: This plot demonstrates the steady increase in environment reward over 30 training steps, showing the Qwen agent learning to successfully navigate the task.*
-
-![Failure vs Success Trajectory](artifacts/failure_success_trajectory.png)
-*Figure 2: This plot compares the negative cumulative reward of the untrained baseline vs. the positive scaling reward of our fully trained policy.*
-
-## ⚖️ How to Evaluate (For Judges)
+## How to Evaluate
 
 1. **Check out the Interactive Demo:** Visit the [Hosted Demo](https://samdutta123-scaler-final-openenv.hf.space/demo/) to see the fully trained agent navigate schema drift and actor conflicts in real-time.
 2. **Review the REINFORCE RL Implementation:** Open our [Google Colab Notebook](https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb) to see our transparent optimization loop. We train a Qwen model directly against our environment's custom reward function.
@@ -201,4 +197,3 @@ python training/grpo_training.py
 - **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
 - **Interactive Hosted Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo/`
 - **Colab Notebook URL**: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb`
-
