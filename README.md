@@ -99,7 +99,7 @@ When TRL/Unsloth are unavailable locally, the script automatically falls back to
 
 You can run the full **REINFORCE policy gradient training loop** directly against the environment in Google Colab (T4 GPU recommended).
 
-[Open in Google Colab](https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb)
+[Open in Google Colab](https://colab.research.google.com/drive/10TEk77X_PxMcvkGHmqwkkebNqvif7wgw?usp=sharing)
 
 The notebook generates reward progression evidence: baseline (0.488) -> mid (0.677) -> trained (0.701).
 
@@ -140,7 +140,7 @@ The notebook generates reward progression evidence: baseline (0.488) -> mid (0.6
 ## How to Evaluate
 
 1. **Check out the Interactive Demo:** Visit the [Hosted Demo](https://samdutta123-scaler-final-openenv.hf.space/demo/) to see the fully trained agent navigate schema drift and actor conflicts in real-time.
-2. **Review the REINFORCE RL Implementation:** Open our [Google Colab Notebook](https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb) to see our transparent optimization loop. We train a Qwen model directly against our environment's custom reward function.
+2. **Review the REINFORCE RL Implementation:** Open our [Google Colab Notebook](https://colab.research.google.com/drive/10TEk77X_PxMcvkGHmqwkkebNqvif7wgw?usp=sharing) to see our transparent optimization loop. We train a Qwen model directly against our environment's custom reward function.
 3. **Analyze the Environment Dynamics:** Look at `src/environment.py`. You will see our implementation of:
    - Schema drift (v1 -> v2 -> v3)
    - Multi-stakeholder conflicts and deceptive actors
@@ -196,4 +196,4 @@ python training/grpo_training.py
 
 - **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
 - **Interactive Hosted Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo/`
-- **Colab Notebook URL**: `https://colab.research.google.com/github/redhatsam09/scaler-final/blob/main/training/trl_unsloth_compliance_notebook.ipynb`
+- **Colab Notebook URL**: `https://colab.research.google.com/drive/10TEk77X_PxMcvkGHmqwkkebNqvif7wgw?usp=sharing`
