@@ -19,6 +19,7 @@ pinned: false
 - **Interactive Hosted Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo/`
 - **Colab Notebook URL**: `https://colab.research.google.com/drive/10TEk77X_PxMcvkGHmqwkkebNqvif7wgw?usp=sharing`
 - **Youtube**: `https://youtu.be/TyRsvAdmXjY`
+- **GitHub**: `https://github.com/redhatsam09/scaler-final`
 
 ## The Problem
 
