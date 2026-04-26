@@ -13,6 +13,13 @@ pinned: false
 > **Theme #3.1 — World Modeling (Professional Tasks)**
 > A multi-app RL environment where LLM agents must orchestrate CRM, Billing, and Support workflows under schema drift, conflicting actor incentives, deceptive recommendations, economic constraints, and stochastic delegation outcomes.
 
+## Submission Links
+
+- **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
+- **Interactive Hosted Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo/`
+- **Colab Notebook URL**: `https://colab.research.google.com/drive/10TEk77X_PxMcvkGHmqwkkebNqvif7wgw?usp=sharing`
+- **Youtube**: `https://youtu.be/TyRsvAdmXjY`
+
 ## The Problem
 
 Enterprise workflows are messy. A real enterprise operations agent must:
@@ -149,6 +156,8 @@ The notebook generates reward progression evidence: baseline (0.488) -> mid (0.6
 
 ## Interactive Demo
 
+[YouTube](https://youtu.be/TyRsvAdmXjY)
+
 Visit the HF Space and navigate to `/demo` for an interactive Gradio UI where you can:
 - Reset with any task/difficulty/seed
 - Execute actions step by step
@@ -191,9 +200,3 @@ python world_modeling_demo.py
 # Generate initial training data (if not using Colab)
 python training/grpo_training.py
 ```
-
-## Submission Links
-
-- **Hugging Face Space URL**: `https://huggingface.co/spaces/samdutta123/scaler-final-openenv`
-- **Interactive Hosted Demo**: `https://samdutta123-scaler-final-openenv.hf.space/demo/`
-- **Colab Notebook URL**: `https://colab.research.google.com/drive/10TEk77X_PxMcvkGHmqwkkebNqvif7wgw?usp=sharing`
